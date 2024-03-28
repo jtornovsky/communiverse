@@ -1,0 +1,60 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0005-create-like-table
+      author: jtornovsky
+      changes:
+        - createTable:
+            tableName: "like"
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: post_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+                    updatable: false
+              - column:
+                  name: modified
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: like
+            baseColumnNames: user_id
+            constraintName: fk_like_user_id
+            referencedTableName: user
+            referencedColumnNames: id
+        - addForeignKeyConstraint:
+            baseTableName: like
+            baseColumnNames: post_id
+            constraintName: fk_like_post_id
+            referencedTableName: post
+            referencedColumnNames: id
+
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: like
+            constraintName: fk_like_user_id
+        - dropForeignKeyConstraint:
+            baseTableName: like
+            constraintName: fk_like_post_id
+        - dropTable:
+            tableName: [ 'like' ]

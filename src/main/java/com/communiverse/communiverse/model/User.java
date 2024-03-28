@@ -44,6 +44,9 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Comment> comments;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Like> likes;
+
     @ManyToMany
     @JoinTable(name = "user_followers",
             joinColumns = @JoinColumn(name = "follower_id"),
