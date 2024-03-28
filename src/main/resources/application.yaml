@@ -1,0 +1,26 @@
+server:
+  port: 8080
+  error:
+    whitelabel:
+      enabled: false
+    path: /error
+
+spring:
+  datasource:
+    driverClassName: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/communiverse?allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: root
+  autoconfigure:
+    exclude=org.springframework.boot.autoconfigure.security.SecurityAutoConfiguration
+  application:
+    name: communiverse
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  logging:
+    level:
+      org.springframework.security: INFO

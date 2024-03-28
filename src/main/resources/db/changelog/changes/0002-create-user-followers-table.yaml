@@ -1,0 +1,40 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0002-create-user-followers-table
+      author: jtornovsky
+      changes:
+        - createTable:
+            tableName: user_followers
+            columns:
+              - column:
+                  name: follower_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: followed_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: user_followers
+            baseColumnNames: follower_id
+            constraintName: fk_follower_id
+            referencedTableName: user
+            referencedColumnNames: id
+        - addForeignKeyConstraint:
+            baseTableName: user_followers
+            baseColumnNames: followed_id
+            constraintName: fk_followed_id
+            referencedTableName: user
+            referencedColumnNames: id
+
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: user_followers
+            constraintName: fk_follower_id
+        - dropForeignKeyConstraint:
+            baseTableName: user_followers
+            constraintName: fk_followed_id
+        - dropTable:
+            tableName: [ 'user_followers' ]

@@ -1,0 +1,68 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0004-create-comment-table
+      author: jtornovsky
+      changes:
+        - createTable:
+            tableName: comment
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: content
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: post_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: parent_comment_id
+                  type: BIGINT
+              - column:
+                  name: created
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+                    updatable: false
+              - column:
+                  name: modified
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: comment
+            baseColumnNames: user_id
+            constraintName: fk_comment_user_id
+            referencedTableName: user
+            referencedColumnNames: id
+        - addForeignKeyConstraint:
+            baseTableName: comment
+            baseColumnNames: post_id
+            constraintName: fk_comment_post_id
+            referencedTableName: post
+            referencedColumnNames: id
+
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: comment
+            constraintName: fk_comment_user_id
+        - dropForeignKeyConstraint:
+            baseTableName: comment
+            constraintName: fk_comment_post_id
+        - dropTable:
+            tableName: [ 'comment' ]
