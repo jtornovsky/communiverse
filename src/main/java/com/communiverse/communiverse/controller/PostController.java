@@ -3,6 +3,7 @@ package com.communiverse.communiverse.controller;
 import com.communiverse.communiverse.model.Post;
 import com.communiverse.communiverse.services.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -29,6 +30,7 @@ public class PostController {
     }
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public Mono<Post> createPost(@RequestBody Post post) {
         return postService.createPost(post);
     }
@@ -39,6 +41,7 @@ public class PostController {
     }
 
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public Mono<Void> deletePost(@PathVariable("id") Long id) {
         return postService.deletePost(id);
     }

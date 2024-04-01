@@ -35,7 +35,7 @@ public class User {
     @Column(name = "profile_picture")
     private String profilePicture;
 
-    @Column(name = "last_login", nullable = false, updatable = false)
+    @Column(name = "last_login")
     private LocalDateTime lastLogin;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
