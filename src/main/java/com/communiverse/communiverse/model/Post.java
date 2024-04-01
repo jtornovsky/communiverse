@@ -22,6 +22,9 @@ public class Post {
     @Column(name = "id", nullable = false, updatable = false)
     private Long id;
 
+    @Column(name = "title")
+    private String title;
+
     @Column(name = "content")
     private String content;
 
