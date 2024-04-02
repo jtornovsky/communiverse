@@ -31,7 +31,7 @@ public class UserController {
         return userService.getAllUsers();
     }
 
-    @PostMapping("/{id}/create")
+    @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<User> createUser(@RequestBody User user) {
         return userService.createUser(user);

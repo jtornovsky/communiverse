@@ -39,10 +39,11 @@ public class LikeService {
     }
 
     public Mono<Void> unlikePost(Long postId, Long userId) {
+        // Create a Mono that asynchronously emits the result of calling likeRepository.findByPostIdAndUserId(postId, userId)
+        Mono<Like> optionalLike = Mono.fromCallable(() -> likeRepository.findByPostIdAndUserId(postId, userId))
+                .flatMap(Mono::justOrEmpty); // Convert Optional to Mono
 
-        // Find the like by postId and userId
-        Mono<Like> optionalLike = Mono.justOrEmpty(likeRepository.findByPostIdAndUserId(postId, userId));
-
+        // Chain the operations on the optionalLike Mono
         return optionalLike.flatMap(like -> {
             // If the like is found, delete it
             return Mono.fromRunnable(() -> likeRepository.delete(like));

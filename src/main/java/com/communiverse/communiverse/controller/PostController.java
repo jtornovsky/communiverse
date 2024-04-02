@@ -29,7 +29,7 @@ public class PostController {
         return postService.getAllPosts();
     }
 
-    @PostMapping("/{id}/create")
+    @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<Post> createPost(@RequestBody Post post) {
         return postService.createPost(post);
