@@ -3,6 +3,8 @@ package com.communiverse.communiverse.services;
 import com.communiverse.communiverse.model.Comment;
 import com.communiverse.communiverse.model.Like;
 import com.communiverse.communiverse.model.User;
+import com.communiverse.communiverse.repo.CommentRepository;
+import com.communiverse.communiverse.repo.LikeRepository;
 import com.communiverse.communiverse.repo.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,10 +19,14 @@ import java.util.Optional;
 @Slf4j
 public class UserService {
 
+    private final CommentRepository commentRepository;
+    private final LikeRepository likeRepository;
     private final UserRepository userRepository;
 
     @Autowired
-    public UserService(UserRepository userRepository) {
+    public UserService(CommentRepository commentRepository, LikeRepository likeRepository, UserRepository userRepository) {
+        this.commentRepository = commentRepository;
+        this.likeRepository = likeRepository;
         this.userRepository = userRepository;
     }
 
@@ -60,28 +66,53 @@ public class UserService {
     }
 
     public Flux<Comment> getUserComments(Long userId) {
-        // Implement logic to fetch comments by userId from CommentRepository
-        return null; // Placeholder
+        return Mono.fromCallable(() -> commentRepository.findByUserId(userId))
+                .flatMapMany(Flux::fromIterable);
     }
 
     public Flux<Like> getUserLikes(Long userId) {
-        // Implement logic to fetch likes by userId from LikeRepository
-        return null; // Placeholder
+        return Mono.fromCallable(() -> likeRepository.findByUserId(userId))
+                .flatMapMany(Flux::fromIterable);
     }
 
     public Flux<User> getUserFollowers(Long userId) {
-        // Implement logic to fetch followers by userId from UserRepository
-        return null; // Placeholder
+        Mono<Optional<User>> optionalUserMono = Mono.fromCallable(() -> userRepository.findById(userId));
+        return optionalUserMono.flatMapMany(optionalUser -> {
+            if (optionalUser.isPresent()) {
+                User user = optionalUser.get();
+                return Flux.fromIterable(user.getFollowers());
+            } else {
+                return Flux.empty();
+            }
+        });
     }
 
     public Mono<Void> followUser(Long userId, User follower) {
-        // Implement logic to add follower to user's followers list in UserRepository
-        return null; // Placeholder
+        return Mono.fromCallable(() -> userRepository.findById(userId))
+                .flatMap(userOptional -> {
+                    if (userOptional.isPresent()) {
+                        User user = userOptional.get();
+                        user.getFollowers().add(follower);
+                        return Mono.fromCallable(() -> userRepository.save(user));
+                    } else {
+                        return Mono.error(new RuntimeException("User not found with id: " + userId));
+                    }
+                })
+                .then();
     }
 
     public Mono<Void> unfollowUser(Long userId, User follower) {
-        // Implement logic to remove follower from user's followers list in UserRepository
-        return null; // Placeholder
+        return Mono.fromCallable(() -> userRepository.findById(userId))
+                .flatMap(userOptional -> {
+                    if (userOptional.isPresent()) {
+                        User user = userOptional.get();
+                        user.getFollowers().removeIf(u -> u.getId().equals(follower.getId()));
+                        return Mono.fromCallable(() -> userRepository.save(user));
+                    } else {
+                        return Mono.error(new RuntimeException("User not found with id: " + userId));
+                    }
+                })
+                .then();
     }
 
     private void cloneUser(User source, User target) {
