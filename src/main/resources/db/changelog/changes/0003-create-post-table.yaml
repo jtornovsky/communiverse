@@ -16,6 +16,8 @@ databaseChangeLog:
               - column:
                   name: title
                   type: VARCHAR(255)
+                  constraints:
+                    nullable: false
               - column:
                   name: content
                   type: TEXT

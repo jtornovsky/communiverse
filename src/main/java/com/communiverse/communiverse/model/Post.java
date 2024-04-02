@@ -22,10 +22,10 @@ public class Post {
     @Column(name = "id", nullable = false, updatable = false)
     private Long id;
 
-    @Column(name = "title")
+    @Column(name = "title", nullable = false)
     private String title;
 
-    @Column(name = "content")
+    @Column(name = "content", nullable = false)
     private String content;
 
     @Column(name = "image")

@@ -19,7 +19,7 @@ public class PostController {
         this.postService = postService;
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id}/get")
     public Mono<Post> getPostById(@PathVariable("id") Long id) {
         return postService.getPostById(id);
     }
@@ -29,18 +29,18 @@ public class PostController {
         return postService.getAllPosts();
     }
 
-    @PostMapping
+    @PostMapping("/{id}/create")
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<Post> createPost(@RequestBody Post post) {
         return postService.createPost(post);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{id}/update")
     public Mono<Post> updatePost(@PathVariable("id") Long id, @RequestBody Post post) {
         return postService.updatePost(id, post);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id}/delete")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public Mono<Void> deletePost(@PathVariable("id") Long id) {
         return postService.deletePost(id);

@@ -37,16 +37,22 @@ public class UserService {
     }
 
     public Mono<User> updateUser(Long id, User user) {
+        // Create a Mono that asynchronously fetches the Optional<User> from the repository
+        Mono<Optional<User>> optionalUserMono = Mono.fromCallable(() -> userRepository.findById(id));
 
-        Optional<User> userOptional = userRepository.findById(id);
-        if (userOptional.isEmpty()) {
-            log.warn("No such user with id {}", id);
-            throw new RuntimeException("No such user with id " + id);
-        }
-
-        User existingUser = userOptional.get();
-        cloneUser(user, existingUser);
-        return Mono.just(userRepository.save(existingUser));
+        // Process the optional user inside the flatMap
+        return optionalUserMono.flatMap(optionalUser -> {
+            if (optionalUser.isPresent()) {
+                // If the Optional<User> contains a user, update it and save
+                User existingUser = optionalUser.get();
+                cloneUser(user, existingUser);
+                return Mono.just(userRepository.save(existingUser));
+            } else {
+                // If the Optional<User> is empty, log a warning and throw an exception
+                log.warn("No such user with id {}", id);
+                throw new RuntimeException("No such user with id " + id);
+            }
+        });
     }
 
     public Mono<Void> deleteUser(Long id) {

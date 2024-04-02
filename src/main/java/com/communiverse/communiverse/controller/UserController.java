@@ -21,7 +21,7 @@ public class UserController {
         this.userService = userService;
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id}/get")
     public Mono<User> getUserById(@PathVariable Long id) {
         return userService.getUserById(id);
     }
@@ -31,18 +31,18 @@ public class UserController {
         return userService.getAllUsers();
     }
 
-    @PostMapping
+    @PostMapping("/{id}/create")
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<User> createUser(@RequestBody User user) {
         return userService.createUser(user);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{id}/update")
     public Mono<User> updateUser(@PathVariable Long id, @RequestBody User user) {
         return userService.updateUser(id, user);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id}/delete")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public Mono<Void> deleteUser(@PathVariable Long id) {
         return userService.deleteUser(id);

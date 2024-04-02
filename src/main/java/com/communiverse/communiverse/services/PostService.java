@@ -36,16 +36,21 @@ public class PostService {
     }
 
     public Mono<Post> updatePost(Long id, Post post) {
+        // Create a Mono that asynchronously fetches the Optional<Post> from the repository
+        Mono<Optional<Post>> optionalPostMono = Mono.fromCallable(() -> postRepository.findById(id));
 
-        Optional<Post> postOptional = postRepository.findById(id);
-        if (postOptional.isEmpty()) {
-            log.warn("No such post with id {}", id);
-            throw new RuntimeException("No such post with id " + id);
-        }
-
-        Post existingPost = postOptional.get();
-        clonePost(post, existingPost);
-        return Mono.just(postRepository.save(existingPost));
+        // Process the optional post inside the flatMap
+        return optionalPostMono.flatMap(optionalPost -> {
+            if (optionalPost.isPresent()) {
+                // If the Optional<Post> contains a post, update it and save
+                Post existingPost = optionalPost.get();
+                clonePost(post, existingPost);
+                return Mono.just(postRepository.save(existingPost));
+            } else {
+                // If the Optional<Post> is empty, log a warning and throw an exception
+                throw new RuntimeException("No such post with id " + id);
+            }
+        });
     }
 
     public Mono<Void> deletePost(Long id) {

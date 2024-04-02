@@ -22,7 +22,7 @@ public class Comment {
     @Column(name = "id", nullable = false, updatable = false)
     private Long id;
 
-    @Column(name = "content")
+    @Column(name = "content", nullable = false)
     private String content;
 
     @ManyToOne
