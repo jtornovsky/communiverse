@@ -76,7 +76,7 @@ public class UserService {
     }
 
     public Flux<User> getUserFollowers(Long userId) {
-        Mono<Optional<User>> optionalUserMono = Mono.fromCallable(() -> userRepository.findById(userId));
+        Mono<Optional<User>> optionalUserMono = Mono.fromCallable(() -> userRepository.findByIdWithFollowers(userId));
         return optionalUserMono.flatMapMany(optionalUser -> {
             if (optionalUser.isPresent()) {
                 User user = optionalUser.get();
@@ -88,12 +88,12 @@ public class UserService {
     }
 
     public Mono<Void> followUser(Long userId, User follower) {
-        return Mono.fromCallable(() -> userRepository.findById(userId))
+        return Mono.fromCallable(() -> userRepository.findByIdWithFollowers(userId))
                 .flatMap(userOptional -> {
                     if (userOptional.isPresent()) {
-                        User user = userOptional.get();
-                        user.getFollowers().add(follower);
-                        return Mono.fromCallable(() -> userRepository.save(user));
+                        User followedUser = userOptional.get();
+                        followedUser.getFollowers().add(follower);
+                        return Mono.fromCallable(() -> userRepository.save(followedUser));
                     } else {
                         return Mono.error(new RuntimeException("User not found with id: " + userId));
                     }
@@ -102,7 +102,7 @@ public class UserService {
     }
 
     public Mono<Void> unfollowUser(Long userId, User follower) {
-        return Mono.fromCallable(() -> userRepository.findById(userId))
+        return Mono.fromCallable(() -> userRepository.findByIdWithFollowers(userId))
                 .flatMap(userOptional -> {
                     if (userOptional.isPresent()) {
                         User user = userOptional.get();
