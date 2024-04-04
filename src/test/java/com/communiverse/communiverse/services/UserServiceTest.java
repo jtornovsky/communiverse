@@ -18,13 +18,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
-import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static com.communiverse.communiverse.utils.CreateDataUtils.createUser;
+import static com.communiverse.communiverse.utils.VerificationResultsUtils.verifyUser;
 
 @ActiveProfiles("test")
 @ExtendWith(SpringExtension.class)
@@ -92,6 +89,30 @@ public class UserServiceTest {
     }
 
     @Test
+    void testDeleteUser() {
+        // Create a test user
+        User user = createUser();
+
+        // Test createUser method
+        Mono<User> createUserResult = userService.createUser(user);
+        StepVerifier.create(createUserResult)
+                .expectNext(user)
+                .verifyComplete();
+
+        // Call deleteUser method
+        Mono<Void> deleteUserResult = userService.deleteUser(user.getId());
+
+        // Use StepVerifier to test the result
+        StepVerifier.create(deleteUserResult)
+                .verifyComplete();
+
+        // Verify that the user is deleted
+        StepVerifier.create(userService.getUserById(user.getId()))
+                .expectNextCount(0)
+                .verifyComplete();
+    }
+
+    @Test
     public void testAddAndRemoveFollowers() {
         User user = createUser();
         userRepository.save(user);
@@ -122,43 +143,6 @@ public class UserServiceTest {
         followers = userService.getUserFollowers(user.getId());
         StepVerifier.create(followers)
                 .expectNextCount(2)
-                .verifyComplete();
-    }
-
-
-
-    private User createUser() {
-
-        String textData = UUID.randomUUID().toString();
-        String userName = textData.substring(0, 7);
-        String password = textData.substring(8);
-
-        User user = new User();
-        user.setUserName(userName);
-        user.setEmail(userName + "@email.com");
-        user.setPassword(password);
-        user.setCreated(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
-        user.setModified(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
-        user.setLastLogin(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
-
-        return user;
-    }
-
-    private void verifyUser(User expectedUser, Mono<User> actualUserMono) {
-        /*
-         using reactive testing techniques with StepVerifier to handle
-         asynchronous operations in a more concise and efficient way
-         */
-        StepVerifier.create(actualUserMono)
-                .assertNext(actualUser -> {
-                    assertNotNull(actualUser);
-                    assertEquals(expectedUser.getUserName(), actualUser.getUserName());
-                    assertEquals(expectedUser.getEmail(), actualUser.getEmail());
-                    assertEquals(expectedUser.getPassword(), actualUser.getPassword());
-                    assertEquals(expectedUser.getModified(), actualUser.getModified());
-                    assertEquals(expectedUser.getCreated(), actualUser.getCreated());
-                    assertEquals(expectedUser.getLastLogin(), actualUser.getLastLogin());
-                })
                 .verifyComplete();
     }
 

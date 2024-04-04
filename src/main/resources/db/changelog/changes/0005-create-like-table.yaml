@@ -13,16 +13,16 @@ databaseChangeLog:
                   constraints:
                     primaryKey: true
                     nullable: false
+                    updatable: false
               - column:
                   name: user_id
                   type: BIGINT
-                  constraints:
-                    nullable: false
               - column:
                   name: post_id
                   type: BIGINT
-                  constraints:
-                    nullable: false
+              - column:
+                  name: comment_id
+                  type: BIGINT
               - column:
                   name: created
                   type: TIMESTAMP
@@ -48,6 +48,12 @@ databaseChangeLog:
             constraintName: fk_like_post_id
             referencedTableName: post
             referencedColumnNames: id
+        - addForeignKeyConstraint:
+            baseTableName: like
+            baseColumnNames: comment_id
+            constraintName: fk_like_comment_id
+            referencedTableName: comment
+            referencedColumnNames: id
 
       rollback:
         - dropForeignKeyConstraint:
@@ -56,5 +62,8 @@ databaseChangeLog:
         - dropForeignKeyConstraint:
             baseTableName: like
             constraintName: fk_like_post_id
+        - dropForeignKeyConstraint:
+            baseTableName: like
+            constraintName: fk_like_comment_id
         - dropTable:
             tableName: [ 'like' ]

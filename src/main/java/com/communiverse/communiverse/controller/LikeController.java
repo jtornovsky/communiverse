@@ -30,10 +30,22 @@ public class LikeController {
         return likeService.unlikePost(postId, userId);
     }
 
+    @PostMapping("/{commentId}/{userId}/like")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Mono<Like> likeComment(@PathVariable Long commentId, @PathVariable Long userId) {
+        return likeService.likeComment(commentId, userId);
+    }
+
+    @DeleteMapping("/{commentId}/{userId}/unlike")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public Mono<Void> unlikeComment(@PathVariable Long commentId, @PathVariable Long userId) {
+        return likeService.unlikeComment(commentId, userId);
+    }
+
     @DeleteMapping("/{likeId}/unlike")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Mono<Void> unlikePost(@PathVariable Long likeId) {
-        return likeService.unlikePost(likeId);
+    public Mono<Void> unlike(@PathVariable Long likeId) {
+        return likeService.unlike(likeId);
     }
 }
 
