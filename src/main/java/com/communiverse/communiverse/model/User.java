@@ -1,13 +1,15 @@
 package com.communiverse.communiverse.model;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -39,13 +41,13 @@ public class User {
     private LocalDateTime lastLogin;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<Post> posts;
+    private Set<Post> posts;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<Comment> comments;
+    private Set<Comment> comments;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<Like> likes;
+    private Set<Like> likes;
 
     @ManyToMany
     @JoinTable(name = "user_followers",

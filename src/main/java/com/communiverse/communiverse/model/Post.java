@@ -1,13 +1,16 @@
 package com.communiverse.communiverse.model;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "post")
@@ -36,7 +39,7 @@ public class Post {
     private User user;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
-    private List<Comment> comments;
+    private Set<Comment> comments;
 
     @Column(name = "created", nullable = false, updatable = false)
     @CreatedDate

@@ -21,6 +21,7 @@ import reactor.test.StepVerifier;
 import java.util.Arrays;
 
 import static com.communiverse.communiverse.utils.CreateDataUtils.createUser;
+import static com.communiverse.communiverse.utils.VerificationResultsUtils.verifyUpdatedUser;
 import static com.communiverse.communiverse.utils.VerificationResultsUtils.verifyUser;
 
 @ActiveProfiles("test")
@@ -86,6 +87,20 @@ public class UserServiceTest {
         // Check if created user is saved in the database
         Mono<User> userMono = userService.getUserById(user.getId());
         verifyUser(user, userMono);
+    }
+
+    @Test
+    public void testUpdateUserEmail() {
+        User user = createUser();
+        userRepository.save(user);
+
+        user.setEmail("updated@email.com");
+        Mono<User> updatedUserMono = userService.updateUser(user.getId(), user);
+        verifyUpdatedUser(user, updatedUserMono);
+
+        // Check if created user is saved in the database
+        Mono<User> userMono = userService.getUserById(user.getId());
+        verifyUpdatedUser(user, userMono);
     }
 
     @Test

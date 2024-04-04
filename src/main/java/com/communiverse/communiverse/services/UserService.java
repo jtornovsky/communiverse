@@ -44,7 +44,7 @@ public class UserService {
 
     public Mono<User> updateUser(Long id, User user) {
         // Create a Mono that asynchronously fetches the Optional<User> from the repository
-        Mono<Optional<User>> optionalUserMono = Mono.fromCallable(() -> userRepository.findById(id));
+        Mono<Optional<User>> optionalUserMono = Mono.fromCallable(() -> userRepository.findByIdWithAllRelatedData(id));
 
         // Process the optional user inside the flatMap
         return optionalUserMono.flatMap(optionalUser -> {

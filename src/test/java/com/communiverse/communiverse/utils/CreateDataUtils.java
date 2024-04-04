@@ -7,9 +7,7 @@ import com.communiverse.communiverse.model.User;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class CreateDataUtils {
 
@@ -42,7 +40,7 @@ public class CreateDataUtils {
         post.setImage(textData.substring(10));
         post.setUser(user);
 
-        List<Comment> comments = Arrays.asList(createComment(post, user), createComment(post, user), createComment(post, user), createComment(post, user));
+        Set<Comment> comments = Set.of(createComment(post, user), createComment(post, user), createComment(post, user), createComment(post, user));
         post.setComments(comments);
 
         post.setCreated(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
