@@ -21,8 +21,8 @@ import reactor.test.StepVerifier;
 import java.util.Arrays;
 
 import static com.communiverse.communiverse.utils.CreateDataUtils.createUser;
-import static com.communiverse.communiverse.utils.VerificationResultsUtils.verifyUpdatedUser;
-import static com.communiverse.communiverse.utils.VerificationResultsUtils.verifyUser;
+import static com.communiverse.communiverse.utils.CreateDataUtils.createUserWithPostsCommentsLikesFollowers;
+import static com.communiverse.communiverse.utils.VerificationResultsUtils.*;
 
 @ActiveProfiles("test")
 @ExtendWith(SpringExtension.class)
@@ -58,7 +58,7 @@ public class UserServiceTest {
         userRepository.save(user);
 
         Mono<User> userMono = userService.getUserById(user.getId());
-        verifyUser(user, userMono);
+        verifyCreatedUser(user, userMono);
     }
 
     @Test
@@ -86,15 +86,15 @@ public class UserServiceTest {
 
         // Check if created user is saved in the database
         Mono<User> userMono = userService.getUserById(user.getId());
-        verifyUser(user, userMono);
+        verifyCreatedUser(user, userMono);
     }
 
     @Test
-    public void testUpdateUserEmail() {
-        User user = createUser();
+    public void testUpdateUser() {
+        // Create a source user
+        User user = createUserWithPostsCommentsLikesFollowers();
         userRepository.save(user);
 
-        user.setEmail("updated@email.com");
         Mono<User> updatedUserMono = userService.updateUser(user.getId(), user);
         verifyUpdatedUser(user, updatedUserMono);
 
@@ -102,6 +102,22 @@ public class UserServiceTest {
         Mono<User> userMono = userService.getUserById(user.getId());
         verifyUpdatedUser(user, userMono);
     }
+
+//    @Test
+//    void alterUserDataTest() {
+//        // Create a source user
+//        User source = createUserWithPostsCommentsLikesFollowers();
+//
+//        // Create a target user
+//        User target = createUser();
+//        target.setUserName(source.getUserName());
+//
+//        // Apply alterations
+//        userService.alterUserData(source, target);
+//
+//        // Check if the target user was updated correctly
+//        verifyUserFields(source, target);
+//    }
 
     @Test
     void testDeleteUser() {

@@ -10,7 +10,9 @@ import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 @Entity
 @Table(name = "user")
@@ -41,19 +43,19 @@ public class User {
     private LocalDateTime lastLogin;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private Set<Post> posts;
+    private Set<Post> posts = new TreeSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private Set<Comment> comments;
+    private Set<Comment> comments = new TreeSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private Set<Like> likes;
+    private Set<Like> likes = new TreeSet<>();
 
     @ManyToMany
     @JoinTable(name = "user_followers",
             joinColumns = @JoinColumn(name = "follower_id"),
             inverseJoinColumns = @JoinColumn(name = "followed_id"))
-    private Set<User> followers;
+    private Set<User> followers = new HashSet<>();
 
     @Column(name = "created", nullable = false, updatable = false)
     @CreatedDate

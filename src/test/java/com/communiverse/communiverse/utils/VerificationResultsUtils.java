@@ -8,21 +8,15 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class VerificationResultsUtils {
 
-    public static void verifyUser(User expectedUser, Mono<User> actualUserMono) {
+    public static void verifyCreatedUser(User expectedUser, Mono<User> actualUserMono) {
         /*
          using reactive testing techniques with StepVerifier to handle
          asynchronous operations in a more concise and efficient way
          */
         StepVerifier.create(actualUserMono)
                 .assertNext(actualUser -> {
-                    assertNotNull(actualUser);
-                    assertEquals(expectedUser.getUserName(), actualUser.getUserName());
-                    assertEquals(expectedUser.getEmail(), actualUser.getEmail());
-                    assertEquals(expectedUser.getPassword(), actualUser.getPassword());
-                    assertEquals(expectedUser.getProfilePicture(), actualUser.getProfilePicture());
+                    verifyUserFields(expectedUser, actualUser);
                     assertEquals(expectedUser.getModified(), actualUser.getModified());
-                    assertEquals(expectedUser.getCreated(), actualUser.getCreated());
-                    assertEquals(expectedUser.getLastLogin(), actualUser.getLastLogin());
                 })
                 .verifyComplete();
     }
@@ -30,15 +24,23 @@ public class VerificationResultsUtils {
     public static void verifyUpdatedUser(User expectedUser, Mono<User> actualUserMono) {
         StepVerifier.create(actualUserMono)
                 .assertNext(actualUser -> {
-                    assertNotNull(actualUser);
-                    assertEquals(expectedUser.getUserName(), actualUser.getUserName());
-                    assertEquals(expectedUser.getEmail(), actualUser.getEmail());
-                    assertEquals(expectedUser.getPassword(), actualUser.getPassword());
-                    assertEquals(expectedUser.getProfilePicture(), actualUser.getProfilePicture());
+                    verifyUserFields(expectedUser, actualUser);
                     assertTrue(expectedUser.getModified().isBefore(actualUser.getModified()));
-                    assertEquals(expectedUser.getCreated(), actualUser.getCreated());
-                    assertEquals(expectedUser.getLastLogin(), actualUser.getLastLogin());
                 })
                 .verifyComplete();
+    }
+
+    public static void verifyUserFields(User expectedUser, User actualUser) {
+        assertNotNull(actualUser);
+        assertEquals(expectedUser.getUserName(), actualUser.getUserName());
+        assertEquals(expectedUser.getEmail(), actualUser.getEmail());
+        assertEquals(expectedUser.getPassword(), actualUser.getPassword());
+        assertEquals(expectedUser.getProfilePicture(), actualUser.getProfilePicture());
+        assertEquals(expectedUser.getCreated(), actualUser.getCreated());
+        assertEquals(expectedUser.getLastLogin(), actualUser.getLastLogin());
+        assertEquals(expectedUser.getComments(), actualUser.getComments());
+        assertEquals(expectedUser.getPosts(), actualUser.getPosts());
+        assertEquals(expectedUser.getLikes(), actualUser.getLikes());
+        assertEquals(expectedUser.getFollowers(), actualUser.getFollowers());
     }
 }

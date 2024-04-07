@@ -7,6 +7,7 @@ import com.communiverse.communiverse.repo.CommentRepository;
 import com.communiverse.communiverse.repo.LikeRepository;
 import com.communiverse.communiverse.repo.UserRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -42,7 +43,7 @@ public class UserService {
         return Mono.just(userRepository.save(user));
     }
 
-    public Mono<User> updateUser(Long id, User user) {
+    public Mono<User> updateUser(Long id, User updatedUser) {
         // Create a Mono that asynchronously fetches the Optional<User> from the repository
         Mono<Optional<User>> optionalUserMono = Mono.fromCallable(() -> userRepository.findByIdWithAllRelatedData(id));
 
@@ -51,7 +52,7 @@ public class UserService {
             if (optionalUser.isPresent()) {
                 // If the Optional<User> contains a user, update it and save
                 User existingUser = optionalUser.get();
-                cloneUser(user, existingUser);
+                alterUserData(updatedUser, existingUser);
                 return Mono.just(userRepository.save(existingUser));
             } else {
                 // If the Optional<User> is empty, log a warning and throw an exception
@@ -115,14 +116,53 @@ public class UserService {
                 .then();
     }
 
-    private void cloneUser(User source, User target) {
-        target.setEmail(source.getEmail());
-        target.setPassword(source.getPassword());
-        target.setProfilePicture(source.getProfilePicture());
-        target.setLastLogin(source.getLastLogin());
-        target.setComments(source.getComments());
-        target.setPosts(source.getPosts());
-        target.setModified(LocalDateTime.now());
+    private void alterUserData(@NotNull User source, @NotNull User target) {
+
+        boolean isUpdated = false;
+
+        if (source.getEmail() != null && !source.getEmail().equals(target.getEmail())) {
+            target.setEmail(source.getEmail());
+            isUpdated = true;
+        }
+
+        if (source.getPassword() != null && !source.getPassword().equals(target.getPassword())) {
+            target.setPassword(source.getPassword());
+            isUpdated = true;
+        }
+
+        if (source.getProfilePicture() != null && !source.getProfilePicture().equals(target.getProfilePicture())) {
+            target.setProfilePicture(source.getProfilePicture());
+            isUpdated = true;
+        }
+
+        if (source.getLastLogin() != null && !source.getLastLogin().equals(target.getLastLogin())) {
+            target.setLastLogin(source.getLastLogin());
+            isUpdated = true;
+        }
+
+        if (source.getComments() != null && !source.getComments().equals(target.getComments())) {
+            target.setComments(source.getComments());
+            isUpdated = true;
+        }
+
+        if (source.getPosts() != null && !source.getPosts().equals(target.getPosts())) {
+            target.setPosts(source.getPosts());
+            isUpdated = true;
+        }
+
+        if (source.getLikes() != null && !source.getLikes().equals(target.getLikes())) {
+            target.setLikes(source.getLikes());
+            isUpdated = true;
+        }
+
+        if (source.getFollowers() != null && !source.getFollowers().equals(target.getFollowers())) {
+            target.setFollowers(source.getFollowers());
+            isUpdated = true;
+        }
+
+        if (isUpdated) {
+            target.setModified(LocalDateTime.now());
+        }
     }
 }
 

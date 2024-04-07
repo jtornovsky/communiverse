@@ -1,13 +1,18 @@
 package com.communiverse.communiverse.model;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 @Entity
 @Table(name = "comment")
@@ -15,7 +20,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Comment {
+public class Comment implements Comparable<Comment> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,7 +43,10 @@ public class Comment {
     private Comment parentComment; // For comment replies
 
     @OneToMany(mappedBy = "parentComment", cascade = CascadeType.ALL)
-    private List<Comment> replies; // For comment replies
+    private Set<Comment> replies = new TreeSet<>(); // For comment replies
+
+    @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL)
+    private Set<Like> likes = new TreeSet<>();    // For comment likes
 
     @Column(name = "created", nullable = false, updatable = false)
     @CreatedDate
@@ -47,4 +55,10 @@ public class Comment {
     @Column(name = "modified", nullable = false)
     @LastModifiedDate
     private LocalDateTime modified = LocalDateTime.now(ZoneOffset.UTC);
+
+    @Override
+    public int compareTo(@NotNull Comment other) {
+        // Compare comments based on their creation date
+        return this.created.compareTo(other.created);
+    }
 }

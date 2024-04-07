@@ -5,12 +5,14 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Set;
+import java.util.TreeSet;
 
 @Entity
 @Table(name = "post")
@@ -18,7 +20,7 @@ import java.util.Set;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Post {
+public class Post implements Comparable<Post> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,7 +41,10 @@ public class Post {
     private User user;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
-    private Set<Comment> comments;
+    private Set<Comment> comments = new TreeSet<>();
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
+    private Set<Like> likes = new TreeSet<>();
 
     @Column(name = "created", nullable = false, updatable = false)
     @CreatedDate
@@ -48,4 +53,9 @@ public class Post {
     @Column(name = "modified", nullable = false)
     @LastModifiedDate
     private LocalDateTime modified = LocalDateTime.now(ZoneOffset.UTC);
+
+    @Override
+    public int compareTo(@NotNull Post other) {
+        return this.created.compareTo(other.created);
+    }
 }

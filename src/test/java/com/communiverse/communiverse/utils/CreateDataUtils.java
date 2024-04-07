@@ -11,10 +11,50 @@ import java.util.*;
 
 public class CreateDataUtils {
 
+    public static User createUserWithPostsCommentsLikesFollowers() {
+
+        User user = createUser();
+        Post post1 = createPost(user);
+        Post post2 = createPost(user);
+        Post post3 = createPost(user);
+
+        createComment(createUser(), post1);
+        createComment(createUser(), post1);
+        createComment(createUser(), post1);
+        createComment(createUser(), post1);
+
+        createComment(createUser(), post2);
+        createComment(createUser(), post2);
+        createComment(createUser(), post2);
+
+        User replyingUser = createUser();
+        Comment comment = createComment(replyingUser, post3);
+        Comment commentWithReplies1 = createCommentReply(user, comment);
+        Comment commentWithReplies2 = createCommentReply(replyingUser, commentWithReplies1);
+        Comment commentWithReplies3 = createCommentReply(user, commentWithReplies2);
+
+        createPostLike(createUser(), post1);
+        createPostLike(replyingUser, post1);
+        createPostLike(createUser(), post3);
+
+        createCommentLike(replyingUser, commentWithReplies1);
+        createCommentLike(user, comment);
+
+        User follower1 = createUser();
+        User follower2 = createUser();
+        follower1.setFollowers(Set.of(follower2, user));
+        follower2.setFollowers(Set.of(replyingUser));
+        replyingUser.setFollowers(Set.of(user, follower1));
+        Set<User> followers = new HashSet<>(Arrays.asList(follower1, follower2, replyingUser));
+        user.setFollowers(followers);
+
+        return user;
+    }
+
     public static User createUser() {
 
         String textData = UUID.randomUUID().toString();
-        String userName = textData.substring(0, 7);
+        String userName = textData.substring(0, 10);
         String password = textData.substring(8);
 
         User user = new User();
@@ -40,18 +80,17 @@ public class CreateDataUtils {
         post.setImage(textData.substring(10));
         post.setUser(user);
 
-        Set<Comment> comments = Set.of(createComment(post, user), createComment(post, user), createComment(post, user), createComment(post, user));
-        post.setComments(comments);
-
         post.setCreated(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
         post.setModified(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
+
+        user.getPosts().add(post);
 
         return post;
     }
 
-    public static Comment createComment(Post post, User user) {
+    public static Comment createComment(User user, Post post) {
 
-        String textData = "comment_" + UUID.randomUUID() + "_" + UUID.randomUUID();
+        String textData = "comment_on_post_" + post.getId() + "_" + UUID.randomUUID() + "_" + UUID.randomUUID();
 
         Comment comment = new Comment();
         comment.setContent(textData);
@@ -60,6 +99,8 @@ public class CreateDataUtils {
 
         comment.setCreated(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
         comment.setModified(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
+
+        post.getComments().add(comment);
 
         return comment;
     }
@@ -76,6 +117,8 @@ public class CreateDataUtils {
         reply.setCreated(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
         reply.setModified(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
 
+        parentComment.getReplies().add(reply);
+
         return reply;
     }
 
@@ -88,6 +131,8 @@ public class CreateDataUtils {
         like.setCreated(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
         like.setModified(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
 
+        post.getLikes().add(like);
+
         return like;
     }
 
@@ -96,10 +141,11 @@ public class CreateDataUtils {
         Like like = new Like();
         like.setUser(user);
         like.setComment(comment);
-        like.setPost(comment.getPost());
 
         like.setCreated(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
         like.setModified(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
+
+        comment.getLikes().add(like);
 
         return like;
     }

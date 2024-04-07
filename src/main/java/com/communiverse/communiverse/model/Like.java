@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
@@ -17,7 +18,8 @@ import java.time.ZoneOffset;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Like {
+public class Like implements Comparable<Like> {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false, updatable = false)
@@ -42,5 +44,10 @@ public class Like {
     @Column(name = "modified", nullable = false)
     @LastModifiedDate
     private LocalDateTime modified = LocalDateTime.now(ZoneOffset.UTC);
+
+    @Override
+    public int compareTo(@NotNull Like other) {
+        return this.created.compareTo(other.created);
+    }
 }
 
