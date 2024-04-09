@@ -13,6 +13,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -51,10 +52,10 @@ public class User {
     private Set<Comment> comments = new TreeSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private Set<LikeOnPost> likesOnPosts = new TreeSet<>();
+    private Set<LikeOnPost> likeOnPosts = new TreeSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private Set<LikeOnComment> likesOnComments = new TreeSet<>();
+    private Set<LikeOnComment> likeOnComments = new TreeSet<>();
 
     @ManyToMany
     @JoinTable(name = "user_followers",
@@ -69,4 +70,29 @@ public class User {
     @Column(name = "modified", nullable = false)
     @LastModifiedDate
     private LocalDateTime modified = LocalDateTime.now(ZoneOffset.UTC);
+
+    @Override
+    public final boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof User user)) return false;
+
+        return Objects.equals(id, user.id)
+                && Objects.equals(userName, user.userName)
+                && Objects.equals(email, user.email)
+                && Objects.equals(password, user.password)
+                && Objects.equals(profilePicture, user.profilePicture)
+                && Objects.equals(lastLogin, user.lastLogin)
+                && Objects.equals(followers, user.followers);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(id);
+        result = 31 * result + Objects.hashCode(userName);
+        result = 31 * result + Objects.hashCode(email);
+        result = 31 * result + Objects.hashCode(password);
+        result = 31 * result + Objects.hashCode(profilePicture);
+        result = 31 * result + Objects.hashCode(lastLogin);
+        return result;
+    }
 }

@@ -12,6 +12,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Objects;
 
 @MappedSuperclass
 @Getter
@@ -40,6 +41,21 @@ public abstract class Like implements Comparable<Like> {
     @Override
     public int compareTo(@NotNull Like other) {
         return this.created.compareTo(other.created);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Like like)) return false;
+
+        return Objects.equals(id, like.id) && Objects.equals(user, like.user);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(id);
+        result = 31 * result + Objects.hashCode(user);
+        return result;
     }
 }
 

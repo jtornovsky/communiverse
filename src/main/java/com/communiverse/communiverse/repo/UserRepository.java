@@ -15,15 +15,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u " +
             "LEFT JOIN FETCH u.followers " +
-            "LEFT JOIN FETCH u.likesOnPosts " +
-            "LEFT JOIN FETCH u.likesOnComments " +
+            "LEFT JOIN FETCH u.likeOnPosts " +
+            "LEFT JOIN FETCH u.likeOnComments " +
             "LEFT JOIN FETCH u.comments " +
             "LEFT JOIN FETCH u.posts " +
             "WHERE u.id = :userId")
     Optional<User> findByIdWithAllRelatedData(Long userId);
-
-    @Query("SELECT u FROM User u " +
-            "LEFT JOIN FETCH u.posts " +
-            "WHERE u.id = :userId")
-    Optional<User> findByIdWithAllPosts(Long userId);
 }

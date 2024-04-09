@@ -12,6 +12,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -43,10 +44,10 @@ public class Comment implements Comparable<Comment> {
     @JoinColumn(name = "parent_comment_id")
     private Comment parentComment; // For comment replies
 
-    @OneToMany(mappedBy = "parentComment", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "parentComment", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<Comment> replies = new TreeSet<>(); // For comment replies
 
-    @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "comment", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<LikeOnComment> likes = new TreeSet<>();    // For comment likes
 
     @Column(name = "created", nullable = false, updatable = false)
@@ -61,5 +62,27 @@ public class Comment implements Comparable<Comment> {
     public int compareTo(@NotNull Comment other) {
         // Compare comments based on their creation date
         return this.created.compareTo(other.created);
+    }
+
+    @Override
+    public final boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Comment comment)) return false;
+
+        return Objects.equals(id, comment.id)
+                && Objects.equals(content, comment.content)
+                && Objects.equals(user, comment.user)
+                && Objects.equals(post, comment.post)
+                && Objects.equals(parentComment, comment.parentComment);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(id);
+        result = 31 * result + Objects.hashCode(content);
+        result = 31 * result + Objects.hashCode(user);
+        result = 31 * result + Objects.hashCode(post);
+        result = 31 * result + Objects.hashCode(parentComment);
+        return result;
     }
 }

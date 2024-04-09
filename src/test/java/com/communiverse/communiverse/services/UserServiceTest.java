@@ -11,6 +11,7 @@ import com.communiverse.communiverse.repo.PostRepository;
 import com.communiverse.communiverse.repo.UserRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.LoggerFactory;
@@ -27,6 +28,7 @@ import java.util.Arrays;
 import static com.communiverse.communiverse.utils.CreateInMemoryDataUtils.*;
 import static com.communiverse.communiverse.utils.VerificationResultsUtils.*;
 
+//@Disabled("Disabled until issue #??? is fixed")
 @ActiveProfiles("test")
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -51,27 +53,27 @@ public class UserServiceTest {
         this.postRepository = postRepository;
     }
 
-//    @BeforeEach
+    @BeforeEach
     void setUp() {
         setupLogger();
     }
 
-//    @AfterEach
+    @AfterEach
     void cleanUp() {
         clearTestData();
     }
 
-//    @Test
+    @Test
     public void testGetUserById() {
         // Create a test user
         User user = createUser();
         userRepository.save(user);
 
-        Mono<User> userMono = userService.getUserById(user.getId());
+        Mono<User> userMono = userService.getUserEagerlyById(user.getId());
         verifyCreatedUser(user, userMono);
     }
 
-//    @Test
+    @Test
     public void testGetAllUsers() {
         // Create some test users
         userRepository.saveAll(Arrays.asList(createUser(), createUser(), createUser(), createUser()));
@@ -83,7 +85,7 @@ public class UserServiceTest {
                 .verifyComplete();
     }
 
-//    @Test
+    @Test
     public void testCreateUser() {
         // Create a test user
         User user = createUser();
@@ -95,55 +97,50 @@ public class UserServiceTest {
                 .verifyComplete();
 
         // Check if created user is saved in the database
-        Mono<User> userMono = userService.getUserById(user.getId());
+        Mono<User> userMono = userService.getUserEagerlyById(user.getId());
         verifyCreatedUser(user, userMono);
     }
 
-//    @Test
+    @Test
     public void testUpdateUser() {
         // Create a source user
-//        User user = createUserWithPostsCommentsLikesFollowers();
-//        postRepository.saveAll(user.getPosts());
-//        commentRepository.saveAll(user.getComments());
-//        likeRepository.saveAll(user.getLikes());
-//        userRepository.save(user);
-
         User user = createUser();
         userRepository.save(user);
         Mono<User> userMono = userService.getUserById(user.getId());
-        user = userRepository.findByIdWithAllPosts(user.getId()).get();
+        user = userService.getUserEagerlyById(user.getId()).block();
 
         Post post1 = createPost(user);
-//        postRepository.save(post1);
-//        Post post2 = createPost(user);
-//        Post post3 = createPost(user);
-        userRepository.save(user);
+        Post post2 = createPost(user);
+        Post post3 = createPost(user);
+        postRepository.saveAll(Arrays.asList(post1, post2, post3));
 
         Mono<User> updatedUserMono = userService.updateUser(user.getId(), user);
-        verifyUpdatedUser(user, updatedUserMono);
+        StepVerifier.create(updatedUserMono)
+                .expectNextCount(1)
+                .verifyComplete();
 
         // Check if created user is saved in the database
-//        Mono<User> userMono = userService.getUserById(user.getId());
-//        verifyUpdatedUser(user, userMono);
+        updatedUserMono = userService.getUserEagerlyById(user.getId());
+        verifyUpdatedUser(user, updatedUserMono);
     }
 
-//    @Test
-//    void alterUserDataTest() {
-//        // Create a source user
-//        User source = createUserWithPostsCommentsLikesFollowers();
-//
-//        // Create a target user
-//        User target = createUser();
-//        target.setUserName(source.getUserName());
-//
-//        // Apply alterations
-//        userService.alterUserData(source, target);
-//
-//        // Check if the target user was updated correctly
-//        verifyUserFields(source, target);
-//    }
+    @Test
+    void alterUserDataTest() {
+        // Create a source user
+        User source = createUserWithPostsCommentsLikesFollowers();
 
-//    @Test
+        // Create a target user
+        User target = createUser();
+        target.setUserName(source.getUserName());
+
+        // Apply alterations
+        userService.alterUserData(source, target);
+
+        // Check if the target user was updated correctly
+        verifyUserFields(source, target);
+    }
+
+    @Test
     void testDeleteUser() {
         // Create a test user
         User user = createUser();
@@ -167,7 +164,7 @@ public class UserServiceTest {
                 .verifyComplete();
     }
 
-//    @Test
+    @Test
     public void testAddAndRemoveFollowers() {
         User user = createUser();
         userRepository.save(user);
@@ -209,7 +206,10 @@ public class UserServiceTest {
     }
 
     private void  clearTestData() {
-        userRepository.deleteAllInBatch();
+        // deleteAll does not cascade, so used regular delete
+        for (User user : userRepository.findAll()) {
+            userRepository.delete(user);
+        }
     }
 }
 

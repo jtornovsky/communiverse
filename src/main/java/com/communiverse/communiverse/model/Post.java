@@ -12,6 +12,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -41,10 +42,10 @@ public class Post implements Comparable<Post> {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "post", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<Comment> comments = new TreeSet<>();
 
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "post", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<LikeOnPost> likes = new TreeSet<>();
 
     @Column(name = "created", nullable = false, updatable = false)
@@ -58,5 +59,27 @@ public class Post implements Comparable<Post> {
     @Override
     public int compareTo(@NotNull Post other) {
         return this.created.compareTo(other.created);
+    }
+
+    @Override
+    public final boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Post post)) return false;
+
+        return Objects.equals(id, post.id)
+                && Objects.equals(title, post.title)
+                && Objects.equals(content, post.content)
+                && Objects.equals(image, post.image)
+                && Objects.equals(user, post.user);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(id);
+        result = 31 * result + Objects.hashCode(title);
+        result = 31 * result + Objects.hashCode(content);
+        result = 31 * result + Objects.hashCode(image);
+        result = 31 * result + Objects.hashCode(user);
+        return result;
     }
 }

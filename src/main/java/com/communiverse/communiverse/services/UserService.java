@@ -8,8 +8,10 @@ import com.communiverse.communiverse.repo.LikeRepository;
 import com.communiverse.communiverse.repo.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -43,23 +45,22 @@ public class UserService {
         return Mono.just(userRepository.save(user));
     }
 
-    public Mono<User> updateUser(Long id, User updatedUser) {
-        // Create a Mono that asynchronously fetches the Optional<User> from the repository
-        Mono<Optional<User>> optionalUserMono = Mono.fromCallable(() -> userRepository.findByIdWithAllRelatedData(id));
+    public Mono<User> getUserEagerlyById(Long id) {
+        return Mono.fromCallable(() -> userRepository.findByIdWithAllRelatedData(id))
+                .flatMap(optionalUser -> optionalUser.map(Mono::just).orElse(Mono.empty()));
+    }
 
-        // Process the optional user inside the flatMap
-        return optionalUserMono.flatMap(optionalUser -> {
-            if (optionalUser.isPresent()) {
-                // If the Optional<User> contains a user, update it and save
-                User existingUser = optionalUser.get();
-                alterUserData(updatedUser, existingUser);
-                return Mono.just(userRepository.save(existingUser));
-            } else {
-                // If the Optional<User> is empty, log a warning and throw an exception
-                log.warn("No such user with id {}", id);
-                throw new RuntimeException("No such user with id " + id);
-            }
-        });
+    @Transactional
+    public Mono<User> updateUser(Long id, User updatedUser) {
+        // Fetch the user eagerly along with nested entities
+        User updatableUser = userRepository.findByIdWithAllRelatedData(id)
+                .orElseThrow(() -> new RuntimeException("No such user with id " + id));
+
+        // Merge the changes from updatedUser into updatableUser
+        alterUserData(updatedUser, updatableUser);
+
+        // Save the updated user
+        return Mono.just(userRepository.save(updatableUser));
     }
 
     public Mono<Void> deleteUser(Long id) {
@@ -121,7 +122,8 @@ public class UserService {
                 .then();
     }
 
-    private void alterUserData(@NotNull User source, @NotNull User target) {
+    @VisibleForTesting
+    void alterUserData(@NotNull User source, @NotNull User target) {
 
         boolean isUpdated = false;
 
@@ -155,13 +157,13 @@ public class UserService {
             isUpdated = true;
         }
 
-        if (source.getLikesOnComments() != null && !source.getLikesOnComments().equals(target.getLikesOnComments())) {
-            target.setLikesOnComments(source.getLikesOnComments());
+        if (source.getLikeOnComments() != null && !source.getLikeOnComments().equals(target.getLikeOnComments())) {
+            target.setLikeOnComments(source.getLikeOnComments());
             isUpdated = true;
         }
 
-        if (source.getLikesOnPosts() != null && !source.getLikesOnPosts().equals(target.getLikesOnPosts())) {
-            target.setLikesOnPosts(source.getLikesOnPosts());
+        if (source.getLikeOnPosts() != null && !source.getLikeOnPosts().equals(target.getLikeOnPosts())) {
+            target.setLikeOnPosts(source.getLikeOnPosts());
             isUpdated = true;
         }
 
