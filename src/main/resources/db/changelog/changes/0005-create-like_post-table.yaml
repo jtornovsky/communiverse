@@ -1,0 +1,61 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0005-create-like_post-table
+      author: jtornovsky
+      changes:
+        - createTable:
+            tableName: "like_post"
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                    updatable: false
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: post_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+                    updatable: false
+              - column:
+                  name: modified
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: like_post
+            baseColumnNames: user_id
+            constraintName: fk_like_post_user_id
+            referencedTableName: user
+            referencedColumnNames: id
+        - addForeignKeyConstraint:
+            baseTableName: like_post
+            baseColumnNames: post_id
+            constraintName: fk_like_post_post_id
+            referencedTableName: post
+            referencedColumnNames: id
+
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: like_post
+            constraintName: fk_like_post_user_id
+        - dropForeignKeyConstraint:
+            baseTableName: like_post
+            constraintName: fk_like_post_post_id
+        - dropTable:
+            tableName: [ 'like_post' ]

@@ -1,7 +1,7 @@
 package com.communiverse.communiverse.controller;
 
 import com.communiverse.communiverse.model.Comment;
-import com.communiverse.communiverse.model.Like;
+import com.communiverse.communiverse.model.like.Like;
 import com.communiverse.communiverse.model.User;
 import com.communiverse.communiverse.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,10 +54,16 @@ public class UserController {
         return userService.getUserComments(userId);
     }
 
-    // Endpoint to get all likes by user ID
-    @GetMapping("/{userId}/likes")
-    public Flux<Like> getUserLikes(@PathVariable Long userId) {
-        return userService.getUserLikes(userId);
+    // Endpoint to get all posts likes by user ID
+    @GetMapping("/{userId}/post-likes")
+    public Flux<Like> getUserPostLikes(@PathVariable Long userId) {
+        return userService.getUserPostLikes(userId);
+    }
+
+    // Endpoint to get all comments likes by user ID
+    @GetMapping("/{userId}/comment-likes")
+    public Flux<Like> getUserCommentLikes(@PathVariable Long userId) {
+        return userService.getUserCommentLikes(userId);
     }
 
     // Endpoint to get all followers by user ID

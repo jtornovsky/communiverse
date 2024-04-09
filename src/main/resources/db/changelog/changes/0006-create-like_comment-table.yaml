@@ -1,10 +1,10 @@
 databaseChangeLog:
   - changeSet:
-      id: 0005-create-like-table
+      id: 0006-create-like_comment-table
       author: jtornovsky
       changes:
         - createTable:
-            tableName: "like"
+            tableName: "like_comment"
             columns:
               - column:
                   name: id
@@ -17,12 +17,13 @@ databaseChangeLog:
               - column:
                   name: user_id
                   type: BIGINT
-              - column:
-                  name: post_id
-                  type: BIGINT
+                  constraints:
+                    nullable: false
               - column:
                   name: comment_id
                   type: BIGINT
+                  constraints:
+                    nullable: false
               - column:
                   name: created
                   type: TIMESTAMP
@@ -37,33 +38,24 @@ databaseChangeLog:
                   constraints:
                     nullable: false
         - addForeignKeyConstraint:
-            baseTableName: like
+            baseTableName: like_comment
             baseColumnNames: user_id
-            constraintName: fk_like_user_id
+            constraintName: fk_like_comment_user_id
             referencedTableName: user
             referencedColumnNames: id
         - addForeignKeyConstraint:
-            baseTableName: like
-            baseColumnNames: post_id
-            constraintName: fk_like_post_id
-            referencedTableName: post
-            referencedColumnNames: id
-        - addForeignKeyConstraint:
-            baseTableName: like
+            baseTableName: like_comment
             baseColumnNames: comment_id
-            constraintName: fk_like_comment_id
+            constraintName: fk_like_comment_comment_id
             referencedTableName: comment
             referencedColumnNames: id
 
       rollback:
         - dropForeignKeyConstraint:
-            baseTableName: like
-            constraintName: fk_like_user_id
+            baseTableName: like_comment
+            constraintName: fk_like_comment_user_id
         - dropForeignKeyConstraint:
             baseTableName: like
-            constraintName: fk_like_post_id
-        - dropForeignKeyConstraint:
-            baseTableName: like
-            constraintName: fk_like_comment_id
+            constraintName: fk_like_comment_comment_id
         - dropTable:
-            tableName: [ 'like' ]
+            tableName: [ 'like_comment' ]

@@ -1,5 +1,6 @@
 package com.communiverse.communiverse.model;
 
+import com.communiverse.communiverse.model.like.LikeOnComment;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -46,7 +47,7 @@ public class Comment implements Comparable<Comment> {
     private Set<Comment> replies = new TreeSet<>(); // For comment replies
 
     @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL)
-    private Set<Like> likes = new TreeSet<>();    // For comment likes
+    private Set<LikeOnComment> likes = new TreeSet<>();    // For comment likes
 
     @Column(name = "created", nullable = false, updatable = false)
     @CreatedDate

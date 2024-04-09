@@ -1,9 +1,11 @@
 package com.communiverse.communiverse.services;
 
 import com.communiverse.communiverse.model.Comment;
-import com.communiverse.communiverse.model.Like;
+import com.communiverse.communiverse.model.like.Like;
 import com.communiverse.communiverse.model.Post;
 import com.communiverse.communiverse.model.User;
+import com.communiverse.communiverse.model.like.LikeOnComment;
+import com.communiverse.communiverse.model.like.LikeOnPost;
 import com.communiverse.communiverse.repo.CommentRepository;
 import com.communiverse.communiverse.repo.LikeRepository;
 import com.communiverse.communiverse.repo.PostRepository;
@@ -108,19 +110,19 @@ public class LikeService {
                         .switchIfEmpty(Mono.error(new RuntimeException("User not found " + userId))));
     }
 
-    private Mono<Like> createPostLike(Tuple2<Post, User> tuple) {
+    private Mono<LikeOnPost> createPostLike(Tuple2<Post, User> tuple) {
         Post post = tuple.getT1(); // Get Post from tuple
         User user = tuple.getT2(); // Get User from tuple
-        Like like = new Like();    // Create new Like
+        LikeOnPost like = new LikeOnPost();    // Create new Like
         like.setPost(post);        // Set Post in Like
         like.setUser(user);        // Set User in Like
         return Mono.fromCallable(() -> likeRepository.save(like)); // Save Like to repository
     }
 
-    private Mono<Like> createCommentLike(Tuple2<Comment, User> tuple) {
+    private Mono<LikeOnComment> createCommentLike(Tuple2<Comment, User> tuple) {
         Comment comment = tuple.getT1(); // Get Comment from tuple
         User user = tuple.getT2(); // Get User from tuple
-        Like like = new Like();    // Create new Like
+        LikeOnComment like = new LikeOnComment();    // Create new Like
         like.setComment(comment);        // Set Post in Like
         like.setUser(user);        // Set User in Like
         return Mono.fromCallable(() -> likeRepository.save(like)); // Save Like to repository

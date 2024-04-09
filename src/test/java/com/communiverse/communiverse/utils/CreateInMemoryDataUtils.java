@@ -1,15 +1,17 @@
 package com.communiverse.communiverse.utils;
 
 import com.communiverse.communiverse.model.Comment;
-import com.communiverse.communiverse.model.Like;
+import com.communiverse.communiverse.model.like.Like;
 import com.communiverse.communiverse.model.Post;
 import com.communiverse.communiverse.model.User;
+import com.communiverse.communiverse.model.like.LikeOnComment;
+import com.communiverse.communiverse.model.like.LikeOnPost;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-public class CreateDataUtils {
+public class CreateInMemoryDataUtils {
 
     public static User createUserWithPostsCommentsLikesFollowers() {
 
@@ -124,7 +126,7 @@ public class CreateDataUtils {
 
     public static Like createPostLike(User user, Post post) {
 
-        Like like = new Like();
+        LikeOnPost like = new LikeOnPost();
         like.setUser(user);
         like.setPost(post);
 
@@ -138,7 +140,7 @@ public class CreateDataUtils {
 
     public static Like createCommentLike(User user, Comment comment) {
 
-        Like like = new Like();
+        LikeOnComment like = new LikeOnComment();
         like.setUser(user);
         like.setComment(comment);
 

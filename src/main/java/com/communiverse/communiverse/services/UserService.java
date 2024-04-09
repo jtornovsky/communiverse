@@ -1,7 +1,7 @@
 package com.communiverse.communiverse.services;
 
 import com.communiverse.communiverse.model.Comment;
-import com.communiverse.communiverse.model.Like;
+import com.communiverse.communiverse.model.like.Like;
 import com.communiverse.communiverse.model.User;
 import com.communiverse.communiverse.repo.CommentRepository;
 import com.communiverse.communiverse.repo.LikeRepository;
@@ -71,8 +71,13 @@ public class UserService {
                 .flatMapMany(Flux::fromIterable);
     }
 
-    public Flux<Like> getUserLikes(Long userId) {
-        return Mono.fromCallable(() -> likeRepository.findByUserId(userId))
+    public Flux<Like> getUserPostLikes(Long userId) {
+        return Mono.fromCallable(() -> likeRepository.findPostLikesByUserId(userId))
+                .flatMapMany(Flux::fromIterable);
+    }
+
+    public Flux<Like> getUserCommentLikes(Long userId) {
+        return Mono.fromCallable(() -> likeRepository.findCommentLikesByUserId(userId))
                 .flatMapMany(Flux::fromIterable);
     }
 
@@ -150,8 +155,13 @@ public class UserService {
             isUpdated = true;
         }
 
-        if (source.getLikes() != null && !source.getLikes().equals(target.getLikes())) {
-            target.setLikes(source.getLikes());
+        if (source.getLikesOnComments() != null && !source.getLikesOnComments().equals(target.getLikesOnComments())) {
+            target.setLikesOnComments(source.getLikesOnComments());
+            isUpdated = true;
+        }
+
+        if (source.getLikesOnPosts() != null && !source.getLikesOnPosts().equals(target.getLikesOnPosts())) {
+            target.setLikesOnPosts(source.getLikesOnPosts());
             isUpdated = true;
         }
 

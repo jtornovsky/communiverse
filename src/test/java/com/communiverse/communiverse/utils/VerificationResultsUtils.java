@@ -40,7 +40,8 @@ public class VerificationResultsUtils {
         assertEquals(expectedUser.getLastLogin(), actualUser.getLastLogin());
         assertEquals(expectedUser.getComments(), actualUser.getComments());
         assertEquals(expectedUser.getPosts(), actualUser.getPosts());
-        assertEquals(expectedUser.getLikes(), actualUser.getLikes());
+        assertEquals(expectedUser.getLikesOnPosts(), actualUser.getLikesOnPosts());
+        assertEquals(expectedUser.getLikesOnComments(), actualUser.getLikesOnComments());
         assertEquals(expectedUser.getFollowers(), actualUser.getFollowers());
     }
 }

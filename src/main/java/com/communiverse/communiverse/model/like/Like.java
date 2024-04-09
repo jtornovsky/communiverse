@@ -1,5 +1,6 @@
-package com.communiverse.communiverse.model;
+package com.communiverse.communiverse.model.like;
 
+import com.communiverse.communiverse.model.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,13 +13,12 @@ import org.springframework.data.annotation.LastModifiedDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
-@Entity
-@Table(name = "like")
+@MappedSuperclass
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Like implements Comparable<Like> {
+public abstract class Like implements Comparable<Like> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,16 +26,8 @@ public class Like implements Comparable<Like> {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
-
-    @ManyToOne
-    @JoinColumn(name = "post_id")
-    private Post post;
-
-    @ManyToOne
-    @JoinColumn(name = "comment_id")
-    private Comment comment;
 
     @Column(name = "created", nullable = false, updatable = false)
     @CreatedDate

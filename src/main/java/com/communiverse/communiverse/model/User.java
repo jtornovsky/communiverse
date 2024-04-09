@@ -1,5 +1,7 @@
 package com.communiverse.communiverse.model;
 
+import com.communiverse.communiverse.model.like.LikeOnComment;
+import com.communiverse.communiverse.model.like.LikeOnPost;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -49,7 +51,10 @@ public class User {
     private Set<Comment> comments = new TreeSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private Set<Like> likes = new TreeSet<>();
+    private Set<LikeOnPost> likesOnPosts = new TreeSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private Set<LikeOnComment> likesOnComments = new TreeSet<>();
 
     @ManyToMany
     @JoinTable(name = "user_followers",

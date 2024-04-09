@@ -1,6 +1,6 @@
 package com.communiverse.communiverse.controller;
 
-import com.communiverse.communiverse.model.Like;
+import com.communiverse.communiverse.model.like.Like;
 import com.communiverse.communiverse.services.LikeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
