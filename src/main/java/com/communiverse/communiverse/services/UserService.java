@@ -82,8 +82,9 @@ public class UserService {
                 .flatMapMany(Flux::fromIterable);
     }
 
+    @Transactional(readOnly = true)
     public Flux<User> getUserFollowers(Long userId) {
-        Mono<Optional<User>> optionalUserMono = Mono.fromCallable(() -> userRepository.findByIdWithFollowers(userId));
+        Mono<Optional<User>> optionalUserMono = Mono.fromCallable(() -> userRepository.findByIdWithAllRelatedData(userId));
         return optionalUserMono.flatMapMany(optionalUser -> {
             if (optionalUser.isPresent()) {
                 User followedUser = optionalUser.get();
@@ -94,32 +95,24 @@ public class UserService {
         });
     }
 
-    public Mono<Void> followUser(Long userId, User follower) {
-        return Mono.fromCallable(() -> userRepository.findByIdWithFollowers(userId))
-                .flatMap(userOptional -> {
-                    if (userOptional.isPresent()) {
-                        User followedUser = userOptional.get();
-                        followedUser.getFollowers().add(follower);
-                        return Mono.fromCallable(() -> userRepository.save(followedUser));
-                    } else {
-                        return Mono.error(new RuntimeException("User not found with id: " + userId));
-                    }
-                })
-                .then();
+    @Transactional
+    public Mono<Void> followUser(Long userId, Long followerId) {
+        User followedUser = userRepository.findByIdWithAllRelatedData(userId)
+                .orElseThrow(() -> new RuntimeException("No such user with id " + userId));
+        User followingUser = userRepository.findByIdWithAllRelatedData(followerId)
+                .orElseThrow(() -> new RuntimeException("No such follower with id " + followerId));
+        followedUser.getFollowers().add(followingUser);
+        return Mono.just(userRepository.save(followedUser)).then();
     }
 
-    public Mono<Void> unfollowUser(Long userId, User follower) {
-        return Mono.fromCallable(() -> userRepository.findByIdWithFollowers(userId))
-                .flatMap(userOptional -> {
-                    if (userOptional.isPresent()) {
-                        User followedUser = userOptional.get();
-                        followedUser.getFollowers().removeIf(u -> u.getId().equals(follower.getId()));
-                        return Mono.fromCallable(() -> userRepository.save(followedUser));
-                    } else {
-                        return Mono.error(new RuntimeException("User not found with id: " + userId));
-                    }
-                })
-                .then();
+    @Transactional
+    public Mono<Void> unfollowUser(Long userId, Long followerId) {
+        User followedUser = userRepository.findByIdWithAllRelatedData(userId)
+                .orElseThrow(() -> new RuntimeException("No such user with id " + userId));
+        User followingUser = userRepository.findByIdWithAllRelatedData(followerId)
+                .orElseThrow(() -> new RuntimeException("No such follower with id " + followerId));
+        followedUser.getFollowers().removeIf(u -> u.getId().equals(followingUser.getId()));
+        return Mono.just(userRepository.save(followedUser)).then();
     }
 
     @VisibleForTesting

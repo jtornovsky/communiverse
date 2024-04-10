@@ -75,15 +75,15 @@ public class UserController {
     // Endpoint to follow a user
     @PostMapping("/{userId}/follow")
     @ResponseStatus(HttpStatus.CREATED)
-    public Mono<Void> followUser(@PathVariable Long userId, @RequestBody User follower) {
-        return userService.followUser(userId, follower);
+    public Mono<Void> followUser(@PathVariable Long userId, @PathVariable Long followerId) {
+        return userService.followUser(userId, followerId);
     }
 
     // Endpoint to unfollow a user
     @DeleteMapping("/{userId}/unfollow")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Mono<Void> unfollowUser(@PathVariable Long userId, @RequestBody User follower) {
-        return userService.unfollowUser(userId, follower);
+    public Mono<Void> unfollowUser(@PathVariable Long userId, @PathVariable Long followerId) {
+        return userService.unfollowUser(userId, followerId);
     }
 }
 

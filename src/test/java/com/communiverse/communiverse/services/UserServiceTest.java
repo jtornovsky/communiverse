@@ -166,22 +166,17 @@ public class UserServiceTest {
 
     @Test
     public void testAddAndRemoveFollowers() {
+
         User user = createUser();
-        userRepository.save(user);
-
         User follower1 = createUser();
-        userRepository.save(follower1);
-
         User follower2 = createUser();
-        userRepository.save(follower2);
-
         User follower3 = createUser();
-        userRepository.save(follower3);
+        userRepository.saveAll(Arrays.asList(user, follower1, follower2, follower3));
 
         // Add followers to the user
-        userService.followUser(user.getId(), follower1).block();
-        userService.followUser(user.getId(), follower2).block();
-        userService.followUser(user.getId(), follower3).block();
+        userService.followUser(user.getId(), follower1.getId());
+        userService.followUser(user.getId(), follower2.getId());
+        userService.followUser(user.getId(), follower3.getId());
 
         Flux<User> followers = userService.getUserFollowers(user.getId());
         // Retrieve followers and verify
@@ -190,7 +185,7 @@ public class UserServiceTest {
                 .verifyComplete();
 
         // Remove follower from the user
-        userService.unfollowUser(user.getId(), follower3).block();
+        userService.unfollowUser(user.getId(), follower3.getId());
         // Retrieve followers and verify
         followers = userService.getUserFollowers(user.getId());
         StepVerifier.create(followers)
