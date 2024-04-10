@@ -6,10 +6,8 @@ import com.communiverse.communiverse.model.Post;
 import com.communiverse.communiverse.model.User;
 import com.communiverse.communiverse.model.like.LikeOnComment;
 import com.communiverse.communiverse.model.like.LikeOnPost;
-import com.communiverse.communiverse.repo.CommentRepository;
-import com.communiverse.communiverse.repo.LikeRepository;
-import com.communiverse.communiverse.repo.PostRepository;
-import com.communiverse.communiverse.repo.UserRepository;
+import com.communiverse.communiverse.repo.*;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -18,14 +16,17 @@ import reactor.util.function.Tuple2;
 @Service
 public class LikeService {
 
-    private final LikeRepository likeRepository;
+    private final LikeOnCommentRepository likeOnCommentRepository;
+    private final LikeOnPostRepository likeOnPostRepository;
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
 
     @Autowired
-    public LikeService(LikeRepository likeRepository, PostRepository postRepository, CommentRepository commentRepository, UserRepository userRepository) {
-        this.likeRepository = likeRepository;
+    public LikeService(LikeOnCommentRepository likeOnCommentRepository, LikeOnPostRepository likeOnPostRepository,
+                       PostRepository postRepository, CommentRepository commentRepository, UserRepository userRepository) {
+        this.likeOnCommentRepository = likeOnCommentRepository;
+        this.likeOnPostRepository = likeOnPostRepository;
         this.postRepository = postRepository;
         this.commentRepository = commentRepository;
         this.userRepository = userRepository;
@@ -55,34 +56,26 @@ public class LikeService {
 
     public Mono<Void> unlikePost(Long postId, Long userId) {
         // Create a Mono that asynchronously emits the result of calling likeRepository.findByPostIdAndUserId(postId, userId)
-        Mono<Like> optionalLike = Mono.fromCallable(() -> likeRepository.findByPostIdAndUserId(postId, userId))
+        Mono<LikeOnPost> optionalLike = Mono.fromCallable(() -> likeOnPostRepository.findByPostIdAndUserId(postId, userId))
                 .flatMap(Mono::justOrEmpty); // Convert Optional to Mono
 
         // Chain the operations on the optionalLike Mono
         return optionalLike.flatMap(like -> {
             // If the like is found, delete it
-            return Mono.fromRunnable(() -> likeRepository.delete(like));
+            return Mono.fromRunnable(() -> likeOnPostRepository.delete(like));
         }).then(); // Ensures that the method returns a Mono<Void>
     }
 
     public Mono<Void> unlikeComment(Long commentId, Long userId) {
         // Create a Mono that asynchronously emits the result of calling likeRepository.findByCommentIdAndUserId(commentId, userId)
-        Mono<Like> optionalLike = Mono.fromCallable(() -> likeRepository.findByCommentIdAndUserId(commentId, userId))
+        Mono<LikeOnComment> optionalLike = Mono.fromCallable(() -> likeOnCommentRepository.findByCommentIdAndUserId(commentId, userId))
                 .flatMap(Mono::justOrEmpty); // Convert Optional to Mono
 
         // Chain the operations on the optionalLike Mono
         return optionalLike.flatMap(like -> {
             // If the like is found, delete it
-            return Mono.fromRunnable(() -> likeRepository.delete(like));
+            return Mono.fromRunnable(() -> likeOnCommentRepository.delete(like));
         }).then(); // Ensures that the method returns a Mono<Void>
-    }
-
-    public Mono<Void> unlike(Long likeId) {
-        /*
-            use Mono.fromRunnable to create a Mono that completes once the deleteById operation is executed.
-            This way, we ensure that the unlikePost method returns a Mono<Void>, as expected
-         */
-        return Mono.fromRunnable(() -> likeRepository.deleteById(likeId));
     }
 
     private Mono<Post> findPostById(Long postId) {
@@ -110,22 +103,24 @@ public class LikeService {
                         .switchIfEmpty(Mono.error(new RuntimeException("User not found " + userId))));
     }
 
-    private Mono<LikeOnPost> createPostLike(Tuple2<Post, User> tuple) {
+    private @NotNull Mono<LikeOnPost> createPostLike(@NotNull Tuple2<Post, User> tuple) {
         Post post = tuple.getT1(); // Get Post from tuple
         User user = tuple.getT2(); // Get User from tuple
         LikeOnPost like = new LikeOnPost();    // Create new Like
         like.setPost(post);        // Set Post in Like
         like.setUser(user);        // Set User in Like
-        return Mono.fromCallable(() -> likeRepository.save(like)); // Save Like to repository
+        post.getLikes().add(like);
+        return Mono.fromCallable(() -> likeOnPostRepository.save(like)); // Save Like to repository
     }
 
-    private Mono<LikeOnComment> createCommentLike(Tuple2<Comment, User> tuple) {
+    private @NotNull Mono<LikeOnComment> createCommentLike(@NotNull Tuple2<Comment, User> tuple) {
         Comment comment = tuple.getT1(); // Get Comment from tuple
         User user = tuple.getT2(); // Get User from tuple
         LikeOnComment like = new LikeOnComment();    // Create new Like
         like.setComment(comment);        // Set Post in Like
         like.setUser(user);        // Set User in Like
-        return Mono.fromCallable(() -> likeRepository.save(like)); // Save Like to repository
+        comment.getLikes().add(like);
+        return Mono.fromCallable(() -> likeOnCommentRepository.save(like)); // Save Like to repository
     }
 }
 

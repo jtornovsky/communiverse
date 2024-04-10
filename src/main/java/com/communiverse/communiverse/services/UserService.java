@@ -4,7 +4,8 @@ import com.communiverse.communiverse.model.Comment;
 import com.communiverse.communiverse.model.like.Like;
 import com.communiverse.communiverse.model.User;
 import com.communiverse.communiverse.repo.CommentRepository;
-import com.communiverse.communiverse.repo.LikeRepository;
+import com.communiverse.communiverse.repo.LikeOnCommentRepository;
+import com.communiverse.communiverse.repo.LikeOnPostRepository;
 import com.communiverse.communiverse.repo.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -23,13 +24,15 @@ import java.util.Optional;
 public class UserService {
 
     private final CommentRepository commentRepository;
-    private final LikeRepository likeRepository;
+    private final LikeOnCommentRepository likeOnCommentRepository;
+    private final LikeOnPostRepository likeOnPostRepository;
     private final UserRepository userRepository;
 
     @Autowired
-    public UserService(CommentRepository commentRepository, LikeRepository likeRepository, UserRepository userRepository) {
+    public UserService(CommentRepository commentRepository, LikeOnCommentRepository likeOnCommentRepository, LikeOnPostRepository likeOnPostRepository, UserRepository userRepository) {
         this.commentRepository = commentRepository;
-        this.likeRepository = likeRepository;
+        this.likeOnCommentRepository = likeOnCommentRepository;
+        this.likeOnPostRepository = likeOnPostRepository;
         this.userRepository = userRepository;
     }
 
@@ -45,6 +48,7 @@ public class UserService {
         return Mono.just(userRepository.save(user));
     }
 
+    @Transactional(readOnly = true)
     public Mono<User> getUserEagerlyById(Long id) {
         return Mono.fromCallable(() -> userRepository.findByIdWithAllRelatedData(id))
                 .flatMap(optionalUser -> optionalUser.map(Mono::just).orElse(Mono.empty()));
@@ -73,12 +77,12 @@ public class UserService {
     }
 
     public Flux<Like> getUserPostLikes(Long userId) {
-        return Mono.fromCallable(() -> likeRepository.findPostLikesByUserId(userId))
+        return Mono.fromCallable(() -> likeOnPostRepository.findPostLikesByUserId(userId))
                 .flatMapMany(Flux::fromIterable);
     }
 
     public Flux<Like> getUserCommentLikes(Long userId) {
-        return Mono.fromCallable(() -> likeRepository.findCommentLikesByUserId(userId))
+        return Mono.fromCallable(() -> likeOnCommentRepository.findCommentLikesByUserId(userId))
                 .flatMapMany(Flux::fromIterable);
     }
 

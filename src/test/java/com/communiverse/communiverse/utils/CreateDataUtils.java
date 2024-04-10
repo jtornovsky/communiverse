@@ -1,19 +1,19 @@
 package com.communiverse.communiverse.utils;
 
 import com.communiverse.communiverse.model.Comment;
-import com.communiverse.communiverse.model.like.Like;
 import com.communiverse.communiverse.model.Post;
 import com.communiverse.communiverse.model.User;
 import com.communiverse.communiverse.model.like.LikeOnComment;
 import com.communiverse.communiverse.model.like.LikeOnPost;
+import org.jetbrains.annotations.NotNull;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-public class CreateInMemoryDataUtils {
+public class CreateDataUtils {
 
-    public static User createUserWithPostsCommentsLikesFollowers() {
+    public static @NotNull User createUserWithPostsCommentsLikesFollowers() {
 
         User user = createUser();
         Post post1 = createPost(user);
@@ -30,8 +30,8 @@ public class CreateInMemoryDataUtils {
         createComment(createUser(), post2);
 
         User replyingUser = createUser();
-        Comment comment = createComment(replyingUser, post3);
-        Comment commentWithReplies1 = createCommentReply(user, comment);
+        Comment initialComment = createComment(replyingUser, post3);
+        Comment commentWithReplies1 = createCommentReply(user, initialComment);
         Comment commentWithReplies2 = createCommentReply(replyingUser, commentWithReplies1);
         Comment commentWithReplies3 = createCommentReply(user, commentWithReplies2);
 
@@ -40,7 +40,7 @@ public class CreateInMemoryDataUtils {
         createPostLike(createUser(), post3);
 
         createCommentLike(replyingUser, commentWithReplies1);
-        createCommentLike(user, comment);
+        createCommentLike(user, initialComment);
 
         User follower1 = createUser();
         User follower2 = createUser();
@@ -53,7 +53,7 @@ public class CreateInMemoryDataUtils {
         return user;
     }
 
-    public static User createUser() {
+    public static @NotNull User createUser() {
 
         String textData = UUID.randomUUID().toString();
         String userName = textData.substring(0, 10);
@@ -72,7 +72,7 @@ public class CreateInMemoryDataUtils {
         return user;
     }
 
-    public static Post createPost(User user) {
+    public static @NotNull Post createPost(@NotNull User user) {
 
         String textData = "post_" + UUID.randomUUID() + "_" + UUID.randomUUID();
 
@@ -90,7 +90,7 @@ public class CreateInMemoryDataUtils {
         return post;
     }
 
-    public static Comment createComment(User user, Post post) {
+    public static @NotNull Comment createComment(@NotNull User user, @NotNull Post post) {
 
         String textData = "comment_on_post_" + post.getId() + "_" + UUID.randomUUID() + "_" + UUID.randomUUID();
 
@@ -107,7 +107,7 @@ public class CreateInMemoryDataUtils {
         return comment;
     }
 
-    public static Comment createCommentReply(User user, Comment parentComment) {
+    public static @NotNull Comment createCommentReply(@NotNull User user, @NotNull Comment parentComment) {
         String textData = "reply_on_comment_" + parentComment.getId() + "_" + UUID.randomUUID() + "_" + UUID.randomUUID();
 
         Comment reply = new Comment();
@@ -124,7 +124,7 @@ public class CreateInMemoryDataUtils {
         return reply;
     }
 
-    public static Like createPostLike(User user, Post post) {
+    public static @NotNull LikeOnPost createPostLike(User user, Post post) {
 
         LikeOnPost like = new LikeOnPost();
         like.setUser(user);
@@ -138,7 +138,7 @@ public class CreateInMemoryDataUtils {
         return like;
     }
 
-    public static Like createCommentLike(User user, Comment comment) {
+    public static LikeOnComment createCommentLike(User user, Comment comment) {
 
         LikeOnComment like = new LikeOnComment();
         like.setUser(user);

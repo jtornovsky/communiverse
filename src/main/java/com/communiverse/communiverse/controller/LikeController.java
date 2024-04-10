@@ -41,11 +41,5 @@ public class LikeController {
     public Mono<Void> unlikeComment(@PathVariable Long commentId, @PathVariable Long userId) {
         return likeService.unlikeComment(commentId, userId);
     }
-
-    @DeleteMapping("/{likeId}/unlike")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Mono<Void> unlike(@PathVariable Long likeId) {
-        return likeService.unlike(likeId);
-    }
 }
 

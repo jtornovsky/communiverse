@@ -3,15 +3,14 @@ package com.communiverse.communiverse.services;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import com.communiverse.communiverse.model.Comment;
 import com.communiverse.communiverse.model.Post;
 import com.communiverse.communiverse.model.User;
-import com.communiverse.communiverse.repo.CommentRepository;
-import com.communiverse.communiverse.repo.LikeRepository;
-import com.communiverse.communiverse.repo.PostRepository;
-import com.communiverse.communiverse.repo.UserRepository;
+import com.communiverse.communiverse.model.like.LikeOnComment;
+import com.communiverse.communiverse.model.like.LikeOnPost;
+import com.communiverse.communiverse.repo.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.LoggerFactory;
@@ -24,8 +23,9 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.Arrays;
+import java.util.stream.IntStream;
 
-import static com.communiverse.communiverse.utils.CreateInMemoryDataUtils.*;
+import static com.communiverse.communiverse.utils.CreateDataUtils.*;
 import static com.communiverse.communiverse.utils.VerificationResultsUtils.*;
 
 //@Disabled("Disabled until issue #??? is fixed")
@@ -34,23 +34,36 @@ import static com.communiverse.communiverse.utils.VerificationResultsUtils.*;
 @SpringBootTest
 public class UserServiceTest {
 
-    private final UserRepository userRepository;
+
     private final UserService userService;
-    private final CommentRepository commentRepository;
-    private final LikeRepository likeRepository;
+    private final PostService postService;
+    private final LikeService likeService;
+    private final CommentService commentService;
+
+    private final UserRepository userRepository;
     private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
+    private final LikeOnPostRepository likeOnPostRepository;
+    private final LikeOnCommentRepository likeOnCommentRepository;
 
     private ListAppender<ILoggingEvent> listAppender;
     private Logger logger;
 
     @Autowired
-    UserServiceTest(UserRepository userRepository, UserService userService,
-                    CommentRepository commentRepository, LikeRepository likeRepository, PostRepository postRepository) {
-        this.userRepository = userRepository;
+    UserServiceTest(UserRepository userRepository, UserService userService, CommentRepository commentRepository, CommentService commentService,
+                    LikeOnCommentRepository likeOnCommentRepository, LikeOnPostRepository likeOnPostRepository,
+                    PostRepository postRepository, PostService postService, LikeService likeService) {
+
         this.userService = userService;
-        this.commentRepository = commentRepository;
-        this.likeRepository = likeRepository;
+        this.postService = postService;
+        this.commentService = commentService;
+        this.likeService = likeService;
+
+        this.userRepository = userRepository;
         this.postRepository = postRepository;
+        this.commentRepository = commentRepository;
+        this.likeOnCommentRepository = likeOnCommentRepository;
+        this.likeOnPostRepository = likeOnPostRepository;
     }
 
     @BeforeEach
@@ -65,9 +78,8 @@ public class UserServiceTest {
 
     @Test
     public void testGetUserById() {
-        // Create a test user
         User user = createUser();
-        userRepository.save(user);
+        userService.createUser(user);
 
         Mono<User> userMono = userService.getUserEagerlyById(user.getId());
         verifyCreatedUser(user, userMono);
@@ -75,13 +87,17 @@ public class UserServiceTest {
 
     @Test
     public void testGetAllUsers() {
-        // Create some test users
-        userRepository.saveAll(Arrays.asList(createUser(), createUser(), createUser(), createUser()));
+
+        final int NUMBER_OF_USERS = 4;
+
+        IntStream.range(0, NUMBER_OF_USERS)
+                .mapToObj(i -> createUser())
+                .forEach(userService::createUser);
 
         // Test getAllUsers method
         Flux<User> result = userService.getAllUsers();
         StepVerifier.create(result)
-                .expectNextCount(4)
+                .expectNextCount(NUMBER_OF_USERS)
                 .verifyComplete();
     }
 
@@ -102,30 +118,80 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testUpdateUser() {
-        // Create a source user
-        User user = createUser();
-        userRepository.save(user);
-        Mono<User> userMono = userService.getUserById(user.getId());
-        user = userService.getUserEagerlyById(user.getId()).block();
+    public void testUpdateAllUserDataInDb() {
 
-        Post post1 = createPost(user);
-        Post post2 = createPost(user);
-        Post post3 = createPost(user);
-        postRepository.saveAll(Arrays.asList(post1, post2, post3));
+        User testedUser = createUser();
+        userService.createUser(testedUser);
+        User anyUser1 = createUser();
+        userService.createUser(anyUser1);
+        User anyUser2 = createUser();
+        userService.createUser(anyUser2);
+        User anyUser3 = createUser();
+        userService.createUser(anyUser3);
+        User anyUser4 = createUser();
+        userService.createUser(anyUser4);
+        User anyUser5 = createUser();
+        userService.createUser(anyUser5);
+        User anyUser6 = createUser();
+        userService.createUser(anyUser6);
+        User anyUser7 = createUser();
+        userService.createUser(anyUser7);
+        User replyingUser = createUser();
+        userService.createUser(replyingUser);
 
-        Mono<User> updatedUserMono = userService.updateUser(user.getId(), user);
+        testedUser = userService.getUserEagerlyById(testedUser.getId()).block();
+
+        Post post1 = createPost(testedUser);
+        postService.createPost(post1);
+        Post post2 = createPost(testedUser);
+        postService.createPost(post2);
+        Post post3 = createPost(testedUser);
+        postService.createPost(post3);
+
+        Comment comment1 = createComment(anyUser1, post1);
+        commentService.createComment(comment1);
+        Comment comment2 = createComment(anyUser2, post1);
+        commentService.createComment(comment2);
+        Comment comment3 = createComment(anyUser3, post1);
+        commentService.createComment(comment3);
+        Comment comment4 = createComment(anyUser4, post1);
+        commentService.createComment(comment4);
+
+        Comment comment5 = createComment(anyUser5, post2);
+        commentService.createComment(comment5);
+        Comment comment6 = createComment(anyUser6, post2);
+        commentService.createComment(comment6);
+        Comment comment7 = createComment(anyUser7, post2);
+        commentService.createComment(comment7);
+
+        Comment initialComment = createComment(replyingUser, post3);
+        commentService.createComment(initialComment);
+        Comment commentWithReplies1 = createCommentReply(testedUser, initialComment);
+        commentService.createComment(commentWithReplies1);
+        Comment commentWithReplies2 = createCommentReply(replyingUser, commentWithReplies1);
+        commentService.createComment(commentWithReplies2);
+        Comment commentWithReplies3 = createCommentReply(testedUser, commentWithReplies2);
+        commentService.createComment(commentWithReplies3);
+
+        likeService.likePost(post1.getId(), anyUser3.getId());
+        likeService.likePost(post1.getId(), replyingUser.getId());
+        likeService.likePost(post3.getId(), anyUser4.getId());
+
+        likeService.likeComment(commentWithReplies1.getId(), replyingUser.getId());
+        likeService.likeComment(initialComment.getId(), testedUser.getId());
+
+        Mono<User> updatedUserMono = userService.updateUser(testedUser.getId(), testedUser);
         StepVerifier.create(updatedUserMono)
                 .expectNextCount(1)
                 .verifyComplete();
 
         // Check if created user is saved in the database
-        updatedUserMono = userService.getUserEagerlyById(user.getId());
-        verifyUpdatedUser(user, updatedUserMono);
+        updatedUserMono = userService.getUserEagerlyById(testedUser.getId());
+        verifyUpdatedUser(testedUser, updatedUserMono);
     }
 
     @Test
-    void alterUserDataTest() {
+    void testUpdateAllUserDataInMemory() {
         // Create a source user
         User source = createUserWithPostsCommentsLikesFollowers();
 
@@ -133,7 +199,6 @@ public class UserServiceTest {
         User target = createUser();
         target.setUserName(source.getUserName());
 
-        // Apply alterations
         userService.alterUserData(source, target);
 
         // Check if the target user was updated correctly
@@ -168,10 +233,13 @@ public class UserServiceTest {
     public void testAddAndRemoveFollowers() {
 
         User user = createUser();
+        userService.createUser(user);
         User follower1 = createUser();
+        userService.createUser(follower1);
         User follower2 = createUser();
+        userService.createUser(follower2);
         User follower3 = createUser();
-        userRepository.saveAll(Arrays.asList(user, follower1, follower2, follower3));
+        userService.createUser(follower3);
 
         // Add followers to the user
         userService.followUser(user.getId(), follower1.getId());
@@ -201,10 +269,11 @@ public class UserServiceTest {
     }
 
     private void  clearTestData() {
-        // deleteAll does not cascade, so used regular delete
-        for (User user : userRepository.findAll()) {
-            userRepository.delete(user);
-        }
+//        likeOnCommentRepository.deleteAllInBatch();
+//        likeOnPostRepository.deleteAllInBatch();
+//        commentRepository.deleteAllInBatch();
+//        postRepository.deleteAllInBatch();
+//        userRepository.deleteAllInBatch();
     }
 }
 
