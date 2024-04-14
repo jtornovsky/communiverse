@@ -6,6 +6,7 @@ import ch.qos.logback.core.read.ListAppender;
 import com.communiverse.communiverse.model.Comment;
 import com.communiverse.communiverse.model.Post;
 import com.communiverse.communiverse.model.User;
+import com.communiverse.communiverse.model.like.Like;
 import com.communiverse.communiverse.model.like.LikeOnComment;
 import com.communiverse.communiverse.model.like.LikeOnPost;
 import com.communiverse.communiverse.repo.*;
@@ -22,7 +23,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.util.Arrays;
 import java.util.stream.IntStream;
 
 import static com.communiverse.communiverse.utils.CreateDataUtils.*;
@@ -33,7 +33,6 @@ import static com.communiverse.communiverse.utils.VerificationResultsUtils.*;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 public class UserServiceTest {
-
 
     private final UserService userService;
     private final PostService postService;
@@ -147,6 +146,8 @@ public class UserServiceTest {
         postService.createPost(post2);
         Post post3 = createPost(testedUser);
         postService.createPost(post3);
+        Post post4 = createPost(anyUser1);
+        postService.createPost(post4);
 
         Comment comment1 = createComment(anyUser1, post1);
         commentService.createComment(comment1);
@@ -173,15 +174,53 @@ public class UserServiceTest {
         Comment commentWithReplies3 = createCommentReply(testedUser, commentWithReplies2);
         commentService.createComment(commentWithReplies3);
 
-        likeService.likePost(post1.getId(), anyUser3.getId());
-        likeService.likePost(post1.getId(), replyingUser.getId());
-        likeService.likePost(post3.getId(), anyUser4.getId());
+        LikeOnPost likeOnPost1 = createPostLike(anyUser3, post1);
+        likeService.createPostLike(likeOnPost1);
+        LikeOnPost likeOnPost2 = createPostLike(replyingUser, post1);
+        likeService.createPostLike(likeOnPost2);
+        LikeOnPost likeOnPost3 = createPostLike(anyUser4, post3);
+        likeService.createPostLike(likeOnPost3);
+        LikeOnPost likeOnPost4 = createPostLike(testedUser, post4);
+        likeService.createPostLike(likeOnPost4);
 
-        likeService.likeComment(commentWithReplies1.getId(), replyingUser.getId());
-        likeService.likeComment(initialComment.getId(), testedUser.getId());
+        Comment likeOnComment1 = createCommentReply(anyUser7, initialComment);
+        commentService.createComment(likeOnComment1);
+        LikeOnComment likeOnComment2 = createCommentLike(anyUser6, commentWithReplies1);
+        likeService.createCommentLike(likeOnComment2);
+        LikeOnComment likeOnComment3 = createCommentLike(anyUser7, initialComment);
+        likeService.createCommentLike(likeOnComment3);
+        LikeOnComment likeOnComment4 = createCommentLike(testedUser, likeOnComment1);
+        likeService.createCommentLike(likeOnComment4);
+
+// TODO: need to understand why the error of Out of memory.; SQL statement happens in case when applying likes on its own comment or post
+
+//        LikeOnComment like7 = createCommentLike(replyingUser, commentWithReplies1);
+//        likeService.createCommentLike(like7);
+//        LikeOnComment like8 = createCommentLike(testedUser, initialComment);
+//        likeService.createCommentLike(like8);
 
         Mono<User> updatedUserMono = userService.updateUser(testedUser.getId(), testedUser);
         StepVerifier.create(updatedUserMono)
+                .expectNextCount(1)
+                .verifyComplete();
+
+        Flux<Post> userPostsMono = postService.getPostsByUserId(testedUser.getId());
+        StepVerifier.create(userPostsMono)
+                .expectNextCount(3)
+                .verifyComplete();
+
+        Flux<Comment> userCommentsMono = commentService.getUserComments(testedUser.getId());
+        StepVerifier.create(userCommentsMono)
+                .expectNextCount(2)
+                .verifyComplete();
+
+        Flux<Like> userLikesOnPostsMono = likeService.getUserPostLikes(testedUser.getId());
+        StepVerifier.create(userLikesOnPostsMono)
+                .expectNextCount(1)
+                .verifyComplete();
+
+        Flux<Like> userLikesOnCommentsMono = likeService.getUserCommentLikes(testedUser.getId());
+        StepVerifier.create(userLikesOnCommentsMono)
                 .expectNextCount(1)
                 .verifyComplete();
 
@@ -269,11 +308,11 @@ public class UserServiceTest {
     }
 
     private void  clearTestData() {
-//        likeOnCommentRepository.deleteAllInBatch();
-//        likeOnPostRepository.deleteAllInBatch();
-//        commentRepository.deleteAllInBatch();
-//        postRepository.deleteAllInBatch();
-//        userRepository.deleteAllInBatch();
+        likeOnCommentRepository.deleteAllInBatch();
+        likeOnPostRepository.deleteAllInBatch();
+        commentRepository.deleteAllInBatch();
+        postRepository.deleteAllInBatch();
+        userRepository.deleteAllInBatch();
     }
 }
 

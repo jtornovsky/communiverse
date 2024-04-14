@@ -134,6 +134,7 @@ public class CreateDataUtils {
         like.setModified(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
 
         post.getLikes().add(like);
+        user.getLikeOnPosts().add(like);
 
         return like;
     }
@@ -148,6 +149,7 @@ public class CreateDataUtils {
         like.setModified(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
 
         comment.getLikes().add(like);
+        user.getLikeOnComments().add(like);
 
         return like;
     }

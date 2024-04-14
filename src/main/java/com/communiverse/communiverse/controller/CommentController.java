@@ -35,7 +35,7 @@ public class CommentController {
     }
 
     @GetMapping("/post/{postId}/user/{userId}/get")
-    public Mono<Comment> getCommentByPostIdAndUserId(@PathVariable Long postId, @PathVariable Long userId) {
+    public Flux<Comment> getCommentByPostIdAndUserId(@PathVariable Long postId, @PathVariable Long userId) {
         return commentService.getCommentByPostIdAndUserId(postId, userId);
     }
 
@@ -56,14 +56,20 @@ public class CommentController {
         return commentService.deleteComment(id);
     }
 
-    @DeleteMapping("/post/{postId}/user/{userId}/delete")
-    public Mono<Void> deleteCommentByPostIdAndUserId(@PathVariable Long postId, @PathVariable Long userId) {
-        return commentService.deleteCommentByPostIdAndUserId(postId, userId);
+    @DeleteMapping("/{commentId}/delete")
+    public Mono<Void> deleteCommentByPostIdAndUserId(@PathVariable Long commentId) {
+        return commentService.deleteCommentById(commentId);
     }
 
-    @PutMapping("/post/{postId}/user/{userId}/update")
-    public Mono<Comment> updateCommentByPostIdAndUserId(@PathVariable Long postId, @PathVariable Long userId, @RequestBody Comment comment) {
-        return commentService.updateCommentByPostIdAndUserId(postId, userId, comment);
+    @PutMapping("/{commentId}/update")
+    public Mono<Comment> updateCommentByPostIdAndUserId(@PathVariable Long commentId, @RequestBody Comment comment) {
+        return commentService.updateCommentById(commentId, comment);
+    }
+
+    // Endpoint to get all comments by user ID
+    @GetMapping("/{userId}/comments")
+    public Flux<Comment> getUserComments(@PathVariable Long userId) {
+        return commentService.getUserComments(userId);
     }
 }
 

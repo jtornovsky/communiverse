@@ -48,24 +48,6 @@ public class UserController {
         return userService.deleteUser(id);
     }
 
-    // Endpoint to get all comments by user ID
-    @GetMapping("/{userId}/comments")
-    public Flux<Comment> getUserComments(@PathVariable Long userId) {
-        return userService.getUserComments(userId);
-    }
-
-    // Endpoint to get all posts likes by user ID
-    @GetMapping("/{userId}/post-likes")
-    public Flux<Like> getUserPostLikes(@PathVariable Long userId) {
-        return userService.getUserPostLikes(userId);
-    }
-
-    // Endpoint to get all comments likes by user ID
-    @GetMapping("/{userId}/comment-likes")
-    public Flux<Like> getUserCommentLikes(@PathVariable Long userId) {
-        return userService.getUserCommentLikes(userId);
-    }
-
     // Endpoint to get all followers by user ID
     @GetMapping("/{userId}/followers")
     public Flux<User> getUserFollowers(@PathVariable Long userId) {

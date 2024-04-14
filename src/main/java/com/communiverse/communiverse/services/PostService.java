@@ -3,6 +3,7 @@ package com.communiverse.communiverse.services;
 import com.communiverse.communiverse.model.Post;
 import com.communiverse.communiverse.repo.PostRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -24,6 +25,14 @@ public class PostService {
 
     public Mono<Post> getPostById(Long id) {
         return Mono.justOrEmpty(postRepository.findById(id));
+    }
+
+    public @NotNull Mono<Optional<Post>> getOptionalPostMonoById(Long postId) {
+        return Mono.fromCallable(() -> postRepository.findById(postId));
+    }
+
+    public Flux<Post> getPostsByUserId(Long userId) {
+        return Flux.fromIterable(postRepository.findByUserId(userId));
     }
 
     public Flux<Post> getAllPosts() {

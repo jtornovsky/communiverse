@@ -2,6 +2,7 @@ package com.communiverse.communiverse.services;
 
 import com.communiverse.communiverse.model.Comment;
 import com.communiverse.communiverse.repo.CommentRepository;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -24,6 +25,10 @@ public class CommentService {
         return Mono.justOrEmpty(commentRepository.findById(id));
     }
 
+    public @NotNull Mono<Optional<Comment>> getOptionalCommentMonoById(Long userId) {
+        return Mono.fromCallable(() -> commentRepository.findById(userId));
+    }
+
     public Flux<Comment> getCommentsByPostId(Long postId) {
         return Flux.fromIterable(commentRepository.findByPostId(postId));
     }
@@ -32,8 +37,14 @@ public class CommentService {
         return Flux.fromIterable(commentRepository.findByUserId(userId));
     }
 
-    public Mono<Comment> getCommentByPostIdAndUserId(Long postId, Long userId) {
-        return Mono.justOrEmpty(commentRepository.findByPostIdAndUserId(postId, userId));
+    public Flux<Comment> getUserComments(Long userId) {
+        return Mono.fromCallable(() -> commentRepository.findByUserId(userId))
+                .flatMapMany(Flux::fromIterable);
+    }
+
+    public Flux<Comment> getCommentByPostIdAndUserId(Long postId, Long userId) {
+        return Mono.fromCallable(() -> commentRepository.findByPostIdAndUserId(postId, userId))
+                .flatMapMany(Flux::fromIterable);
     }
 
     public Mono<Comment> createComment(Comment comment) {
@@ -55,14 +66,16 @@ public class CommentService {
         });
     }
 
-    public Mono<Comment> updateCommentByPostIdAndUserId(Long postId, Long userId, Comment comment) {
-        // Create a Mono that asynchronously emits the result of calling commentRepository.findByPostIdAndUserId(postId, userId)
-        Mono<Comment> existingCommentMono = Mono.fromCallable(() -> commentRepository.findByPostIdAndUserId(postId, userId));
+    public Mono<Comment> updateCommentById(Long commentId, Comment comment) {
+
+        Mono<Comment> existingCommentMono = Mono.fromCallable(() -> commentRepository.findById(commentId))
+                .flatMap(commentOptional -> Mono.justOrEmpty(commentOptional)
+                        .switchIfEmpty(Mono.error(new RuntimeException("Comment not found " + commentId))));
 
         // Chain the operations on the existingCommentMono Mono
         return existingCommentMono.flatMap(existingComment -> {
             if (existingComment == null) {
-                return Mono.error(new RuntimeException("No such comment for postId " + postId + " and userId " + userId));
+                return Mono.error(new RuntimeException("Comment not found " + commentId));
             }
             cloneComment(comment, existingComment);
             return Mono.fromCallable(() -> commentRepository.save(existingComment));
@@ -73,14 +86,16 @@ public class CommentService {
         return Mono.fromRunnable(() -> commentRepository.deleteById(id));
     }
 
-    public Mono<Void> deleteCommentByPostIdAndUserId(Long postId, Long userId) {
-        // Create a Mono that asynchronously emits the result of calling commentRepository.findByPostIdAndUserId(postId, userId)
-        Mono<Comment> existingCommentMono = Mono.fromCallable(() -> commentRepository.findByPostIdAndUserId(postId, userId));
+    public Mono<Void> deleteCommentById(Long commentId) {
+
+        Mono<Comment> existingCommentMono = Mono.fromCallable(() -> commentRepository.findById(commentId))
+                .flatMap(commentOptional -> Mono.justOrEmpty(commentOptional)
+                        .switchIfEmpty(Mono.error(new RuntimeException("Comment not found " + commentId))));
 
         // Chain the operations on the existingCommentMono Mono
         return existingCommentMono.flatMap(existingComment -> {
             if (existingComment == null) {
-                return Mono.error(new RuntimeException("No such comment for postId " + postId + " and userId " + userId));
+                return Mono.error(new RuntimeException("Comment not found " + commentId));
             }
             // Create a Mono<Void> that completes when the delete operation is executed
             return Mono.fromRunnable(() -> commentRepository.delete(existingComment));

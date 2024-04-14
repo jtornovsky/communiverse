@@ -1,11 +1,6 @@
 package com.communiverse.communiverse.services;
 
-import com.communiverse.communiverse.model.Comment;
-import com.communiverse.communiverse.model.like.Like;
 import com.communiverse.communiverse.model.User;
-import com.communiverse.communiverse.repo.CommentRepository;
-import com.communiverse.communiverse.repo.LikeOnCommentRepository;
-import com.communiverse.communiverse.repo.LikeOnPostRepository;
 import com.communiverse.communiverse.repo.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -23,21 +18,19 @@ import java.util.Optional;
 @Slf4j
 public class UserService {
 
-    private final CommentRepository commentRepository;
-    private final LikeOnCommentRepository likeOnCommentRepository;
-    private final LikeOnPostRepository likeOnPostRepository;
     private final UserRepository userRepository;
 
     @Autowired
-    public UserService(CommentRepository commentRepository, LikeOnCommentRepository likeOnCommentRepository, LikeOnPostRepository likeOnPostRepository, UserRepository userRepository) {
-        this.commentRepository = commentRepository;
-        this.likeOnCommentRepository = likeOnCommentRepository;
-        this.likeOnPostRepository = likeOnPostRepository;
+    public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
     public Mono<User> getUserById(Long id) {
          return Mono.justOrEmpty(userRepository.findById(id));
+    }
+
+    public @NotNull Mono<Optional<User>> getOptionalUserMonoById(Long userId) {
+        return Mono.fromCallable(() -> userRepository.findByIdWithAllRelatedData(userId));
     }
 
     public Flux<User> getAllUsers() {
@@ -50,7 +43,7 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public Mono<User> getUserEagerlyById(Long id) {
-        return Mono.fromCallable(() -> userRepository.findByIdWithAllRelatedData(id))
+        return getOptionalUserMonoById(id)
                 .flatMap(optionalUser -> optionalUser.map(Mono::just).orElse(Mono.empty()));
     }
 
@@ -71,24 +64,9 @@ public class UserService {
         return Mono.fromRunnable(() -> userRepository.deleteById(id));
     }
 
-    public Flux<Comment> getUserComments(Long userId) {
-        return Mono.fromCallable(() -> commentRepository.findByUserId(userId))
-                .flatMapMany(Flux::fromIterable);
-    }
-
-    public Flux<Like> getUserPostLikes(Long userId) {
-        return Mono.fromCallable(() -> likeOnPostRepository.findPostLikesByUserId(userId))
-                .flatMapMany(Flux::fromIterable);
-    }
-
-    public Flux<Like> getUserCommentLikes(Long userId) {
-        return Mono.fromCallable(() -> likeOnCommentRepository.findCommentLikesByUserId(userId))
-                .flatMapMany(Flux::fromIterable);
-    }
-
     @Transactional(readOnly = true)
     public Flux<User> getUserFollowers(Long userId) {
-        Mono<Optional<User>> optionalUserMono = Mono.fromCallable(() -> userRepository.findByIdWithAllRelatedData(userId));
+        Mono<Optional<User>> optionalUserMono = getOptionalUserMonoById(userId);
         return optionalUserMono.flatMapMany(optionalUser -> {
             if (optionalUser.isPresent()) {
                 User followedUser = optionalUser.get();
