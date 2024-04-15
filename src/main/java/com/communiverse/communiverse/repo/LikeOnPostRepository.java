@@ -16,5 +16,11 @@ public interface LikeOnPostRepository extends JpaRepository<LikeOnPost, Long> {
 
     @Query("SELECT l FROM LikeOnPost l WHERE l.user.id = :userId")
     List<LikeOnPost> findPostLikesByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT l FROM LikeOnPost l WHERE l.post.id = :postId")
+    List<LikeOnPost> findLikesByPostId(@Param("postId") Long postId);
+
+//    @Query("DELETE FROM LikeOnPost l WHERE l.id = :likeId")
+//    void deleteLike(Long likeId);
 }
 

@@ -7,16 +7,22 @@ import com.communiverse.communiverse.model.User;
 import com.communiverse.communiverse.model.like.LikeOnComment;
 import com.communiverse.communiverse.model.like.LikeOnPost;
 import com.communiverse.communiverse.repo.*;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
+import java.util.Objects;
+import java.util.Optional;
+
 @Service
+@Slf4j
 public class LikeService {
 
     private final LikeOnCommentRepository likeOnCommentRepository;
@@ -57,17 +63,44 @@ public class LikeService {
                 .flatMap(this::createCommentLike);
     }
 
+    // todo: need to implement this method in reactive approach
+    //  currently reactive approach doesn't delete like from the DB for unclear reason (see commented code below)
+    @Transactional
     public Mono<Void> unlikePost(Long userId, Long postId) {
-        // Create a Mono that asynchronously emits the result of calling likeRepository.findByPostIdAndUserId(postId, userId)
-        Mono<LikeOnPost> optionalLike = Mono.fromCallable(() -> likeOnPostRepository.findByPostIdAndUserId(postId, userId))
-                .flatMap(Mono::justOrEmpty); // Convert Optional to Mono
-
-        // Chain the operations on the optionalLike Mono
-        return optionalLike.flatMap(like -> {
-            // If the like is found, delete it
-            return Mono.fromRunnable(() -> likeOnPostRepository.delete(like));
-        }).then(); // Ensures that the method returns a Mono<Void>
+        Optional<LikeOnPost> optionalLike = likeOnPostRepository.findByPostIdAndUserId(postId, userId);
+        if (optionalLike.isPresent()) {
+            Mono<User> userMono = findUserById(userId);
+            Mono<Post> postMono = findPostById(postId);
+            deletePostLike(optionalLike.get(), Objects.requireNonNull(userMono.block()), Objects.requireNonNull(postMono.block()));
+        }
+        return Mono.empty();
     }
+
+//    @Transactional()
+//    public Mono<Void> unlikePost(Long userId, Long postId) {
+//
+//        // Create a Mono that asynchronously emits the result of calling likeRepository.findByPostIdAndUserId(userId, postId)
+//        Mono<LikeOnPost> optionalLike = Mono.fromCallable(() -> likeOnPostRepository.findByPostIdAndUserId(postId, userId))
+//                .flatMap(Mono::justOrEmpty); // Convert Optional to Mono
+//
+//        Mono<User> userMono = findUserById(userId);
+//        Mono<Post> postMono = findPostById(postId);
+//
+//        // Chain the operations on the optionalLike Mono
+//        return optionalLike.flatMap(like -> {
+//                    // If the like is found, delete it
+//                    deletePostLike(like, userMono.block(), postMono.block());
+//                    return Mono.just(like); // Return the like (optional)
+//                }).doOnNext(deletedLike -> {
+//                    if (deletedLike != null) {
+//                        // Like found, log deletion
+//                        log.info("Like #{} of the user #{} deleted from the post #{}", deletedLike.getId(), userId, postId);
+//                    } else {
+//                        // Like not found, log message
+//                        log.info("No like found for user #{} and post #{}", userId, postId);
+//                    }
+//                }).then();
+//    }
 
     public Mono<Void> unlikeComment(Long userId, Long commentId) {
         // Create a Mono that asynchronously emits the result of calling likeRepository.findByCommentIdAndUserId(commentId, userId)
@@ -111,6 +144,11 @@ public class LikeService {
                 .flatMapMany(Flux::fromIterable);
     }
 
+    public Flux<Like> getPostLikes(Long postId) {
+        return Mono.fromCallable(() -> likeOnPostRepository.findLikesByPostId(postId))
+                .flatMapMany(Flux::fromIterable);
+    }
+
     public Flux<Like> getUserCommentLikes(Long userId) {
         return Mono.fromCallable(() -> likeOnCommentRepository.findCommentLikesByUserId(userId))
                 .flatMapMany(Flux::fromIterable);
@@ -144,8 +182,15 @@ public class LikeService {
         LikeOnPost like = new LikeOnPost();    // Create new Like
         like.setPost(post);        // Set Post in Like
         like.setUser(user);        // Set User in Like
-        post.getLikes().add(like);
         return Mono.just(likeOnPostRepository.save(like)); // Save Like to repository
+    }
+
+    private void deletePostLike(@NotNull LikeOnPost like, @NotNull User user, @NotNull Post post) {
+        post.getLikes().removeIf(l -> Objects.equals(l.getId(), like.getId()));
+        user.getLikeOnPosts().removeIf(l -> Objects.equals(l.getId(), like.getId()));
+        postService.updatePost(post.getId(), post);
+        userService.updateUser(user.getId(), user);
+        likeOnPostRepository.delete(like); // Delete Like in repository
     }
 
     private @NotNull Mono<LikeOnComment> createCommentLike(@NotNull Tuple2<User, Comment> tuple) {
@@ -154,7 +199,6 @@ public class LikeService {
         LikeOnComment like = new LikeOnComment();    // Create new Like
         like.setComment(comment);        // Set Comment in Like
         like.setUser(user);        // Set User in Like
-        comment.getLikes().add(like);
         return Mono.just(likeOnCommentRepository.save(like)); // Save Like to repository
     }
 }
