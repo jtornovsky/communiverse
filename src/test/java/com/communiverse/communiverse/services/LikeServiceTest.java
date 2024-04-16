@@ -70,6 +70,7 @@ public class LikeServiceTest {
         userService.createUser(user3);
 
         user1 = userService.getUserEagerlyById(user1.getId()).block();
+        assert user1 != null;
 
         Post testedPost = createPost(user1);
         postService.createPost(testedPost);
