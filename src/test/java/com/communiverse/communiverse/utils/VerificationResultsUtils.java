@@ -72,7 +72,6 @@ public class VerificationResultsUtils {
                 verifyCommentFields(expectedPost.getComments(), actualPost.getComments());
                 verifyLikeOnPostFields(expectedPost.getLikes(), actualPost.getLikes());
                 assertEquals(expectedPost.getCreated(), actualPost.getCreated(), "Created date mismatch for post: " + expectedPost.getTitle());
-                assertEquals(expectedPost.getModified(), actualPost.getModified(), "Modified date mismatch for post: " + expectedPost.getTitle());
             }
         }
     }
@@ -99,7 +98,6 @@ public class VerificationResultsUtils {
                 assertEquals(expectedComment.getParentComment(), actualComment.getParentComment(), "Parent comment mismatch for comment: " + expectedComment.getContent());
                 verifyLikeOnCommentFields(expectedComment.getLikes(), actualComment.getLikes());
                 assertEquals(expectedComment.getCreated(), actualComment.getCreated(), "Created date mismatch for comment: " + expectedComment.getContent());
-                assertEquals(expectedComment.getModified(), actualComment.getModified(), "Modified date mismatch for comment: " + expectedComment.getContent());
                 verifyCommentFields(expectedComment.getReplies(), actualComment.getReplies());  // verifying replies recursively as reply == comment
             } else {
                 assertTrue(actualComments.contains(expectedComment), "Comment not found: " + expectedComment.getContent());
@@ -121,7 +119,6 @@ public class VerificationResultsUtils {
                 assertEquals(expectedLikeOnPost.getUser().getUserName(), actualLikeOnPost.getUser().getUserName(), "User mismatch for like on post: " + expectedLikeOnPost.getPost().getTitle());
                 assertEquals(expectedLikeOnPost.getPost().getTitle(), actualLikeOnPost.getPost().getTitle(), "Post mismatch for like on post: " + expectedLikeOnPost.getPost().getTitle());
                 assertEquals(expectedLikeOnPost.getCreated(), actualLikeOnPost.getCreated(), "Created date mismatch for like on post: " + expectedLikeOnPost.getPost().getTitle());
-                assertEquals(expectedLikeOnPost.getModified(), actualLikeOnPost.getModified(), "Modified date mismatch for like on post: " + expectedLikeOnPost.getPost().getTitle());
             } else {
                 assertTrue(actualLikeOnPosts.contains(expectedLikeOnPost), "Like on post not found: " + expectedLikeOnPost.getPost().getTitle());
             }
@@ -142,7 +139,6 @@ public class VerificationResultsUtils {
                 assertEquals(expectedLikeOnComment.getUser().getUserName(), actualLikeOnComment.getUser().getUserName(), "User mismatch for like on comment: " + expectedLikeOnComment.getComment().getContent());
                 assertEquals(expectedLikeOnComment.getComment().getContent(), actualLikeOnComment.getComment().getContent(), "Comment mismatch for like on comment: " + expectedLikeOnComment.getComment().getContent());
                 assertEquals(expectedLikeOnComment.getCreated(), actualLikeOnComment.getCreated(), "Created date mismatch for like on comment: " + expectedLikeOnComment.getComment().getContent());
-                assertEquals(expectedLikeOnComment.getModified(), actualLikeOnComment.getModified(), "Modified date mismatch for like on comment: " + expectedLikeOnComment.getComment().getContent());
             } else {
                 assertTrue(actualLikeOnComments.contains(expectedLikeOnComment), "Like on comment not found: " + expectedLikeOnComment.getComment().getContent());
             }

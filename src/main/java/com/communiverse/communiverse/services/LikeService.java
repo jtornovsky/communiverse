@@ -89,18 +89,6 @@ public class LikeService {
         return Mono.empty();
     }
 
-    public Mono<Void> unlikeComment11(Long userId, Long commentId) {
-        // Create a Mono that asynchronously emits the result of calling likeRepository.findByCommentIdAndUserId(commentId, userId)
-        Mono<LikeOnComment> optionalLike = Mono.fromCallable(() -> likeOnCommentRepository.findByCommentIdAndUserId(commentId, userId))
-                .flatMap(Mono::justOrEmpty); // Convert Optional to Mono
-
-        // Chain the operations on the optionalLike Mono
-        return optionalLike.flatMap(like -> {
-            // If the like is found, delete it
-            return Mono.fromRunnable(() -> likeOnCommentRepository.delete(like));
-        }).then(); // Ensures that the method returns a Mono<Void>
-    }
-
     private Mono<Post> findPostById(Long postId) {
         // Create a Mono that asynchronously emits the result of calling postRepository.findById(postId)
         // The result is obtained by calling the method in a Callable, which allows for lazy evaluation

@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -44,6 +45,7 @@ public class PostService {
         return Mono.just(postRepository.save(post));
     }
 
+    @Transactional
     public Mono<Post> updatePost(Long id, Post post) {
         // Create a Mono that asynchronously fetches the Optional<Post> from the repository
         Mono<Optional<Post>> optionalPostMono = Mono.fromCallable(() -> postRepository.findById(id));

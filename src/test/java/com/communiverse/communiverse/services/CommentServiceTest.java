@@ -3,15 +3,29 @@ package com.communiverse.communiverse.services;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import com.communiverse.communiverse.model.Comment;
+import com.communiverse.communiverse.model.Post;
+import com.communiverse.communiverse.model.User;
+import com.communiverse.communiverse.model.like.Like;
 import com.communiverse.communiverse.repo.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+
+import java.util.Set;
+
+import static com.communiverse.communiverse.utils.CreateDataUtils.*;
+import static com.communiverse.communiverse.utils.CreateDataUtils.createCommentReply;
+import static com.communiverse.communiverse.utils.VerificationResultsUtils.verifyCommentFields;
 
 @ActiveProfiles("test")
 @ExtendWith(SpringExtension.class)
@@ -59,8 +73,109 @@ public class CommentServiceTest {
         clearTestData();
     }
 
+    @Test
+    public void testCreateUpdateDeleteComment() {
+
+        User user1 = createUser();
+        userService.createUser(user1);
+        User user2 = createUser();
+        userService.createUser(user2);
+        User user3 = createUser();
+        userService.createUser(user3);
+
+        user1 = userService.getUserEagerlyById(user1.getId()).block();
+        assert user1 != null;
+        user2 = userService.getUserEagerlyById(user2.getId()).block();
+        assert user2 != null;
+        user3 = userService.getUserEagerlyById(user3.getId()).block();
+        assert user3 != null;
+
+        Post testedPost = createPost(user1);
+        postService.createPost(testedPost);
+        testedPost = postService.getPostById(testedPost.getId()).block();
+        assert testedPost != null;
+
+        Comment testedComment = createComment(user2, testedPost);
+        commentService.createComment(testedComment);
+        Mono<Comment> commentMono = commentService.getCommentById(testedComment.getId());
+        StepVerifier.create(commentMono)
+                .expectNextCount(1)
+                .verifyComplete();
+        verifyCommentFields(Set.of(testedComment), Set.of(commentMono.block()));
+        testedComment = commentMono.block();
+
+        Comment testedReply1 = createCommentReply(user3, testedComment);
+        commentService.createComment(testedReply1);
+        Mono<Comment> commentReply1Mono = commentService.getCommentById(testedReply1.getId());
+        StepVerifier.create(commentReply1Mono)
+                .expectNextCount(1)
+                .verifyComplete();
+        verifyCommentFields(Set.of(testedReply1), Set.of(commentReply1Mono.block()));
+        testedReply1 = commentReply1Mono.block();
+
+        Comment testedReply2 = createCommentReply(user2, testedComment);
+        commentService.createComment(testedReply2);
+        Mono<Comment> commentReply2Mono = commentService.getCommentById(testedReply2.getId());
+        StepVerifier.create(commentReply2Mono)
+                .expectNextCount(1)
+                .verifyComplete();
+        verifyCommentFields(Set.of(testedReply2), Set.of(commentReply2Mono.block()));
+        testedReply2 = commentReply2Mono.block();
+
+        Comment testedReply3 = createCommentReply(user1, testedReply2);
+        commentService.createComment(testedReply3);
+        Mono<Comment> commentReply3Mono = commentService.getCommentById(testedReply3.getId());
+        StepVerifier.create(commentReply3Mono)
+                .expectNextCount(1)
+                .verifyComplete();
+        verifyCommentFields(Set.of(testedReply3), Set.of(commentReply3Mono.block()));
+        testedReply3 = commentReply3Mono.block();
+
+        Flux<Comment> postCommentsMono = commentService.getPostComments(testedPost.getId());
+        StepVerifier.create(postCommentsMono)
+                .expectNextCount(4)
+                .verifyComplete();
+
+        Flux<Comment> user1CommentsMono = commentService.getUserComments(user1.getId());
+        StepVerifier.create(user1CommentsMono)
+                .expectNextCount(1)
+                .verifyComplete();
+
+        Flux<Comment> user2CommentsMono = commentService.getUserComments(user2.getId());
+        StepVerifier.create(user2CommentsMono)
+                .expectNextCount(2)
+                .verifyComplete();
+
+        Flux<Comment> user3CommentsMono = commentService.getUserComments(user3.getId());
+        StepVerifier.create(user3CommentsMono)
+                .expectNextCount(1)
+                .verifyComplete();
+
+        // test update comment
+        String updatedContent = "Updated content";
+        testedReply3.setContent(updatedContent);
+        Mono<Comment> updatedTestedReply3Mono = commentService.updateComment(testedReply3.getId(), testedReply3);
+        verifyCommentFields(Set.of(testedReply3), Set.of(updatedTestedReply3Mono.block()));
+        commentReply3Mono = commentService.getCommentById(testedReply3.getId());
+        StepVerifier.create(commentReply3Mono)
+                .expectNextCount(1)
+                .verifyComplete();
+        verifyCommentFields(Set.of(testedReply3), Set.of(commentReply3Mono.block()));
+        testedReply3 = commentReply3Mono.block();
+
+        // test delete comment
+        commentService.deleteComment(testedReply3.getId());
+        commentService.deleteComment(testedReply1.getId());
+        commentService.deleteComment(testedComment.getId());
+
+        postCommentsMono = commentService.getPostComments(testedPost.getId());
+        StepVerifier.create(postCommentsMono)
+                .expectNextCount(1)
+                .verifyComplete();
+    }
+
     private void setupLogger() {
-        logger = (Logger) LoggerFactory.getLogger(UserService.class);
+        logger = (Logger) LoggerFactory.getLogger(CommentService.class);
         listAppender = new ListAppender<>();
         listAppender.start();
         logger.addAppender(listAppender);

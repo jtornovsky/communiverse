@@ -26,12 +26,12 @@ public class CommentController {
 
     @GetMapping("/post/{postId}/get")
     public Flux<Comment> getCommentsByPostId(@PathVariable Long postId) {
-        return commentService.getCommentsByPostId(postId);
+        return commentService.getPostComments(postId);
     }
 
     @GetMapping("/user/{userId}/get")
     public Flux<Comment> getCommentsByUserId(@PathVariable Long userId) {
-        return commentService.getCommentsByUserId(userId);
+        return commentService.getUserComments(userId);
     }
 
     @GetMapping("/post/{postId}/user/{userId}/get")
@@ -50,20 +50,15 @@ public class CommentController {
         return commentService.updateComment(id, comment);
     }
 
-    @DeleteMapping("/{id}/delete")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Mono<Void> deleteComment(@PathVariable Long id) {
-        return commentService.deleteComment(id);
-    }
-
     @DeleteMapping("/{commentId}/delete")
-    public Mono<Void> deleteCommentByPostIdAndUserId(@PathVariable Long commentId) {
-        return commentService.deleteCommentById(commentId);
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public Mono<Void> deleteComment(@PathVariable Long commentId) {
+        return commentService.deleteComment(commentId);
     }
 
     @PutMapping("/{commentId}/update")
     public Mono<Comment> updateCommentByPostIdAndUserId(@PathVariable Long commentId, @RequestBody Comment comment) {
-        return commentService.updateCommentById(commentId, comment);
+        return commentService.updateComment(commentId, comment);
     }
 
     // Endpoint to get all comments by user ID
