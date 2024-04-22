@@ -64,7 +64,7 @@ public class LikeService {
     }
 
     // todo: need to implement this method in reactive approach
-    //  currently reactive approach doesn't delete like from the DB for unclear reason (see commented code below)
+    //  currently reactive approach doesn't delete like from the DB for unclear reason
     @Transactional
     public Mono<Void> unlikePost(Long userId, Long postId) {
         Optional<LikeOnPost> optionalLike = likeOnPostRepository.findByPostIdAndUserId(postId, userId);
@@ -76,33 +76,20 @@ public class LikeService {
         return Mono.empty();
     }
 
-//    @Transactional()
-//    public Mono<Void> unlikePost(Long userId, Long postId) {
-//
-//        // Create a Mono that asynchronously emits the result of calling likeRepository.findByPostIdAndUserId(userId, postId)
-//        Mono<LikeOnPost> optionalLike = Mono.fromCallable(() -> likeOnPostRepository.findByPostIdAndUserId(postId, userId))
-//                .flatMap(Mono::justOrEmpty); // Convert Optional to Mono
-//
-//        Mono<User> userMono = findUserById(userId);
-//        Mono<Post> postMono = findPostById(postId);
-//
-//        // Chain the operations on the optionalLike Mono
-//        return optionalLike.flatMap(like -> {
-//                    // If the like is found, delete it
-//                    deletePostLike(like, userMono.block(), postMono.block());
-//                    return Mono.just(like); // Return the like (optional)
-//                }).doOnNext(deletedLike -> {
-//                    if (deletedLike != null) {
-//                        // Like found, log deletion
-//                        log.info("Like #{} of the user #{} deleted from the post #{}", deletedLike.getId(), userId, postId);
-//                    } else {
-//                        // Like not found, log message
-//                        log.info("No like found for user #{} and post #{}", userId, postId);
-//                    }
-//                }).then();
-//    }
-
+    // todo: need to implement this method in reactive approach
+    //  currently reactive approach doesn't delete like from the DB for unclear reason
+    @Transactional
     public Mono<Void> unlikeComment(Long userId, Long commentId) {
+        Optional<LikeOnComment> optionalLike = likeOnCommentRepository.findByCommentIdAndUserId(commentId, userId);
+        if (optionalLike.isPresent()) {
+            Mono<User> userMono = findUserById(userId);
+            Mono<Comment> commentMono = findCommentById(commentId);
+            deleteCommentLike(optionalLike.get(), Objects.requireNonNull(userMono.block()), Objects.requireNonNull(commentMono.block()));
+        }
+        return Mono.empty();
+    }
+
+    public Mono<Void> unlikeComment11(Long userId, Long commentId) {
         // Create a Mono that asynchronously emits the result of calling likeRepository.findByCommentIdAndUserId(commentId, userId)
         Mono<LikeOnComment> optionalLike = Mono.fromCallable(() -> likeOnCommentRepository.findByCommentIdAndUserId(commentId, userId))
                 .flatMap(Mono::justOrEmpty); // Convert Optional to Mono
@@ -146,6 +133,11 @@ public class LikeService {
 
     public Flux<Like> getPostLikes(Long postId) {
         return Mono.fromCallable(() -> likeOnPostRepository.findLikesByPostId(postId))
+                .flatMapMany(Flux::fromIterable);
+    }
+
+    public Flux<Like> getCommentLikes(Long commentId) {
+        return Mono.fromCallable(() -> likeOnCommentRepository.findLikesByCommentId(commentId))
                 .flatMapMany(Flux::fromIterable);
     }
 
@@ -200,6 +192,14 @@ public class LikeService {
         like.setComment(comment);        // Set Comment in Like
         like.setUser(user);        // Set User in Like
         return Mono.just(likeOnCommentRepository.save(like)); // Save Like to repository
+    }
+
+    private void deleteCommentLike(@NotNull LikeOnComment like, @NotNull User user, @NotNull Comment comment) {
+        comment.getLikes().removeIf(l -> Objects.equals(l.getId(), like.getId()));
+        user.getLikeOnComments().removeIf(l -> Objects.equals(l.getId(), like.getId()));
+        commentService.updateComment(comment.getId(), comment);
+        userService.updateUser(user.getId(), user);
+        likeOnCommentRepository.delete(like); // Delete Like in repository
     }
 }
 

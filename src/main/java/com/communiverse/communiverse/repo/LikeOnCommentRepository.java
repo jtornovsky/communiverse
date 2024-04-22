@@ -16,5 +16,8 @@ public interface LikeOnCommentRepository extends JpaRepository<LikeOnComment, Lo
 
     @Query("SELECT l FROM LikeOnComment l WHERE l.user.id = :userId")
     List<LikeOnComment> findCommentLikesByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT l FROM LikeOnComment l WHERE l.comment.id = :commentId")
+    List<LikeOnComment> findLikesByCommentId(@Param("commentId") Long commentId);
 }
 
