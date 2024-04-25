@@ -117,7 +117,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testUpdateAllUserDataInDb() {
+    public void testUpdateAllUserData() {
 
         User testedUser = createUser();
         userService.createUser(testedUser);

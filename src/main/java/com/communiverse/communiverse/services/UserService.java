@@ -29,6 +29,15 @@ public class UserService {
          return Mono.justOrEmpty(userRepository.findById(id));
     }
 
+    Mono<User> findUserById(Long userId) {
+        // Create a Mono that asynchronously emits the result of calling userRepository.findById(userId)
+        // The result is obtained by calling the method in a Callable, which allows for lazy evaluation
+        return getOptionalUserMonoById(userId) // Fetch User by ID
+                .flatMap(userOptional -> Mono.justOrEmpty(userOptional) // Convert Optional to Mono
+                        // Throw error if User not found
+                        .switchIfEmpty(Mono.error(new RuntimeException("User not found " + userId))));
+    }
+
     public @NotNull Mono<Optional<User>> getOptionalUserMonoById(Long userId) {
         return Mono.fromCallable(() -> userRepository.findByIdWithAllRelatedData(userId));
     }

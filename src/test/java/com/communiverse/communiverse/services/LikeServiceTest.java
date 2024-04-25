@@ -90,7 +90,7 @@ public class LikeServiceTest {
                 .expectNextCount(1)
                 .verifyComplete();
 
-        Mono<Post> postMono = postService.getPostById(testedPost.getId());
+        Mono<Post> postMono = postService.findPostById(testedPost.getId());
         StepVerifier.create(postMono)
                 .expectNextCount(1)
                 .verifyComplete();
@@ -145,7 +145,7 @@ public class LikeServiceTest {
 
         Post testedPost = createPost(user1);
         postService.createPost(testedPost);
-        testedPost = postService.getPostById(testedPost.getId()).block();
+        testedPost = postService.findPostById(testedPost.getId()).block();
         assert testedPost != null;
 
         Comment testedComment = createComment(user2, testedPost);

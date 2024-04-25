@@ -3,13 +3,14 @@ package com.communiverse.communiverse.services;
 import com.communiverse.communiverse.model.Comment;
 import com.communiverse.communiverse.model.Post;
 import com.communiverse.communiverse.model.User;
-import com.communiverse.communiverse.model.like.LikeOnComment;
-import com.communiverse.communiverse.model.like.LikeOnPost;
 import com.communiverse.communiverse.repo.CommentRepository;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -19,6 +20,9 @@ import java.util.Optional;
 
 @Service
 public class CommentService {
+
+    private static final Logger log = LoggerFactory.getLogger(CommentService.class);
+    private final String DELETED_COMMENT = "Comment deleted";
 
     private final CommentRepository commentRepository;
     private final UserService userService;
@@ -32,7 +36,15 @@ public class CommentService {
     }
 
     public Mono<Comment> getCommentById(Long id) {
-        return Mono.justOrEmpty(commentRepository.findById(id));
+        return findCommentById(id);
+    }
+
+    public Mono<Comment> findCommentById(Long commentId) {
+        // Create a Mono that asynchronously emits the result of calling commentRepository.findById(commentId)
+        // The result is obtained by calling the method in a Callable, which allows for lazy evaluation
+        return getOptionalCommentMonoById(commentId) // Fetch Comment by ID
+                .flatMap(commentOptional -> Mono.justOrEmpty(commentOptional) // Convert Optional to Mono
+                        .switchIfEmpty(Mono.error(new RuntimeException("Comment not found " + commentId))));  // Throw error if Comment not found
     }
 
     public @NotNull Mono<Optional<Comment>> getOptionalCommentMonoById(Long userId) {
@@ -65,6 +77,11 @@ public class CommentService {
         Comment existingComment = commentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("No such comment with id " + id));
 
+        if (existingComment.getContent().equalsIgnoreCase(DELETED_COMMENT)) {
+            log.warn("The comment with id {} marked as 'deleted' and cannot be updated", id);
+            return Mono.empty();
+        }
+
         // Merge the changes
         cloneComment(comment, existingComment);
 
@@ -72,49 +89,16 @@ public class CommentService {
         return Mono.just(commentRepository.save(existingComment));
     }
 
-//    public Mono<Void> deleteComment(Long commentId) {
-//
-//        Mono<Comment> existingCommentMono = Mono.fromCallable(() -> commentRepository.findById(commentId))
-//                .flatMap(commentOptional -> Mono.justOrEmpty(commentOptional)
-//                        .switchIfEmpty(Mono.error(new RuntimeException("Comment not found " + commentId))));
-//
-//        // Chain the operations on the existingCommentMono Mono
-//        return existingCommentMono.flatMap(existingComment -> {
-//            if (existingComment == null) {
-//                return Mono.error(new RuntimeException("Comment not found " + commentId));
-//            }
-//            // Create a Mono<Void> that completes when the delete operation is executed
-//            return Mono.fromRunnable(() -> commentRepository.delete(existingComment));
-//        });
-//    }
-
     @Transactional
     public Mono<Void> deleteComment(Long commentId) {
         Optional<Comment> optionalComment = commentRepository.findById(commentId);
         if (optionalComment.isPresent()) {
             Comment comment = optionalComment.get();
-            Mono<User> userMono = findUserById(comment.getUser().getId());
-            Mono<Post> postMono = findPostById(comment.getPost().getId());
+            Mono<User> userMono = userService.findUserById(comment.getUser().getId());
+            Mono<Post> postMono = postService.findPostById(comment.getPost().getId());
             removeComment(comment, Objects.requireNonNull(userMono.block()), Objects.requireNonNull(postMono.block()));
         }
         return Mono.empty();
-    }
-
-    private Mono<Post> findPostById(Long postId) {
-        // Create a Mono that asynchronously emits the result of calling postRepository.findById(postId)
-        // The result is obtained by calling the method in a Callable, which allows for lazy evaluation
-        return postService.getOptionalPostMonoById(postId) // Fetch Post by ID
-                .flatMap(postOptional -> Mono.justOrEmpty(postOptional) // Convert Optional to Mono
-                        .switchIfEmpty(Mono.error(new RuntimeException("Post not found " + postId))));  // Throw error if Post not found
-    }
-
-    private Mono<User> findUserById(Long userId) {
-        // Create a Mono that asynchronously emits the result of calling userRepository.findById(userId)
-        // The result is obtained by calling the method in a Callable, which allows for lazy evaluation
-        return userService.getOptionalUserMonoById(userId) // Fetch User by ID
-                .flatMap(userOptional -> Mono.justOrEmpty(userOptional) // Convert Optional to Mono
-                        // Throw error if User not found
-                        .switchIfEmpty(Mono.error(new RuntimeException("User not found " + userId))));
     }
 
     private void cloneComment(Comment source, Comment target) {
@@ -124,11 +108,25 @@ public class CommentService {
     }
 
     private void removeComment(@NotNull Comment comment, @NotNull User user, @NotNull Post post) {
+
+        if (!CollectionUtils.isEmpty(comment.getReplies())) {
+            log.warn("Comment with id {} has replies, so just marking it as 'deleted'", comment.getId());
+            comment.setContent(DELETED_COMMENT);
+            updateComment(comment.getId(), comment);
+            return;
+        }
+
+        Comment parentComment = comment.getParentComment();
+        if (parentComment != null) {
+            parentComment.getReplies().removeIf(c -> Objects.equals(c.getId(), comment.getId()));
+        }
+
         post.getComments().removeIf(c -> Objects.equals(c.getId(), comment.getId()));
         user.getComments().removeIf(c -> Objects.equals(c.getId(), comment.getId()));
         postService.updatePost(post.getId(), post);
         userService.updateUser(user.getId(), user);
         commentRepository.delete(comment); // Delete Comment in repository
+        return;
     }
 }
 

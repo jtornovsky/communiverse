@@ -24,12 +24,12 @@ public class PostService {
         this.postRepository = postRepository;
     }
 
-    public Mono<Post> getPostById(Long id) {
-        return Mono.justOrEmpty(postRepository.findById(id));
-    }
-
-    public @NotNull Mono<Optional<Post>> getOptionalPostMonoById(Long postId) {
-        return Mono.fromCallable(() -> postRepository.findById(postId));
+    public Mono<Post> findPostById(Long postId) {
+        // Create a Mono that asynchronously emits the result of calling postRepository.findById(postId)
+        // The result is obtained by calling the method in a Callable, which allows for lazy evaluation
+        return getOptionalPostMonoById(postId) // Fetch Post by ID
+                .flatMap(postOptional -> Mono.justOrEmpty(postOptional) // Convert Optional to Mono
+                        .switchIfEmpty(Mono.error(new RuntimeException("Post not found " + postId))));  // Throw error if Post not found
     }
 
     public Flux<Post> getPostsByUserId(Long userId) {
@@ -70,6 +70,10 @@ public class PostService {
             This way, we ensure that the deletePost method returns a Mono<Void>, as expected
          */
         return Mono.fromRunnable(() -> postRepository.deleteById(id));
+    }
+
+    private @NotNull Mono<Optional<Post>> getOptionalPostMonoById(Long postId) {
+        return Mono.fromCallable(() -> postRepository.findById(postId));
     }
 
     private void clonePost(Post source, Post target) {

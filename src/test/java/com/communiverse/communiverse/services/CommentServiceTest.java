@@ -82,6 +82,8 @@ public class CommentServiceTest {
         userService.createUser(user2);
         User user3 = createUser();
         userService.createUser(user3);
+        User user4 = createUser();
+        userService.createUser(user4);
 
         user1 = userService.getUserEagerlyById(user1.getId()).block();
         assert user1 != null;
@@ -89,10 +91,12 @@ public class CommentServiceTest {
         assert user2 != null;
         user3 = userService.getUserEagerlyById(user3.getId()).block();
         assert user3 != null;
+        user4 = userService.getUserEagerlyById(user4.getId()).block();
+        assert user4 != null;
 
         Post testedPost = createPost(user1);
         postService.createPost(testedPost);
-        testedPost = postService.getPostById(testedPost.getId()).block();
+        testedPost = postService.findPostById(testedPost.getId()).block();
         assert testedPost != null;
 
         Comment testedComment = createComment(user2, testedPost);
@@ -103,6 +107,15 @@ public class CommentServiceTest {
                 .verifyComplete();
         verifyCommentFields(Set.of(testedComment), Set.of(commentMono.block()));
         testedComment = commentMono.block();
+
+        Comment unrepliedComment = createComment(user4, testedPost);
+        commentService.createComment(unrepliedComment);
+        Mono<Comment> unrepliedCommentMono = commentService.getCommentById(unrepliedComment.getId());
+        StepVerifier.create(commentMono)
+                .expectNextCount(1)
+                .verifyComplete();
+        verifyCommentFields(Set.of(unrepliedComment), Set.of(unrepliedCommentMono.block()));
+        unrepliedComment = unrepliedCommentMono.block();
 
         Comment testedReply1 = createCommentReply(user3, testedComment);
         commentService.createComment(testedReply1);
@@ -133,7 +146,7 @@ public class CommentServiceTest {
 
         Flux<Comment> postCommentsMono = commentService.getPostComments(testedPost.getId());
         StepVerifier.create(postCommentsMono)
-                .expectNextCount(4)
+                .expectNextCount(5)
                 .verifyComplete();
 
         Flux<Comment> user1CommentsMono = commentService.getUserComments(user1.getId());
@@ -151,6 +164,11 @@ public class CommentServiceTest {
                 .expectNextCount(1)
                 .verifyComplete();
 
+        Flux<Comment> user4CommentsMono = commentService.getUserComments(user4.getId());
+        StepVerifier.create(user4CommentsMono)
+                .expectNextCount(1)
+                .verifyComplete();
+
         // test update comment
         String updatedContent = "Updated content";
         testedReply3.setContent(updatedContent);
@@ -164,13 +182,14 @@ public class CommentServiceTest {
         testedReply3 = commentReply3Mono.block();
 
         // test delete comment
+        commentService.deleteComment(unrepliedComment.getId());
         commentService.deleteComment(testedReply3.getId());
         commentService.deleteComment(testedReply1.getId());
-        commentService.deleteComment(testedComment.getId());
+        commentService.deleteComment(testedComment.getId());    // this comment just marked as 'deleted' without physical deletion as it has replies.
 
         postCommentsMono = commentService.getPostComments(testedPost.getId());
         StepVerifier.create(postCommentsMono)
-                .expectNextCount(1)
+                .expectNextCount(2)
                 .verifyComplete();
     }
 

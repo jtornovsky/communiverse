@@ -45,8 +45,8 @@ public class LikeService {
                 // find the Post and User by their IDs
                 // and combine (zip) the emissions of these two Monos into a single tuple.
         return Mono.zip(
-                        findUserById(userId),
-                        findPostById(postId)
+                        userService.findUserById(userId),
+                        postService.findPostById(postId)
                 )
                 // Once both Post and User are found, create a Like
                 .flatMap(this::createPostLike);
@@ -56,8 +56,8 @@ public class LikeService {
         // find the Comment and User by their IDs
         // and combine (zip) the emissions of these two Monos into a single tuple.
         return Mono.zip(
-                        findUserById(userId),
-                        findCommentById(commentId)
+                        userService.findUserById(userId),
+                        commentService.findCommentById(commentId)
                 )
                 // Once both Comment and User are found, create a Like
                 .flatMap(this::createCommentLike);
@@ -69,8 +69,8 @@ public class LikeService {
     public Mono<Void> unlikePost(Long userId, Long postId) {
         Optional<LikeOnPost> optionalLike = likeOnPostRepository.findByPostIdAndUserId(postId, userId);
         if (optionalLike.isPresent()) {
-            Mono<User> userMono = findUserById(userId);
-            Mono<Post> postMono = findPostById(postId);
+            Mono<User> userMono = userService.findUserById(userId);
+            Mono<Post> postMono = postService.findPostById(postId);
             deletePostLike(optionalLike.get(), Objects.requireNonNull(userMono.block()), Objects.requireNonNull(postMono.block()));
         }
         return Mono.empty();
@@ -82,36 +82,11 @@ public class LikeService {
     public Mono<Void> unlikeComment(Long userId, Long commentId) {
         Optional<LikeOnComment> optionalLike = likeOnCommentRepository.findByCommentIdAndUserId(commentId, userId);
         if (optionalLike.isPresent()) {
-            Mono<User> userMono = findUserById(userId);
-            Mono<Comment> commentMono = findCommentById(commentId);
+            Mono<User> userMono = userService.findUserById(userId);
+            Mono<Comment> commentMono = commentService.findCommentById(commentId);
             deleteCommentLike(optionalLike.get(), Objects.requireNonNull(userMono.block()), Objects.requireNonNull(commentMono.block()));
         }
         return Mono.empty();
-    }
-
-    private Mono<Post> findPostById(Long postId) {
-        // Create a Mono that asynchronously emits the result of calling postRepository.findById(postId)
-        // The result is obtained by calling the method in a Callable, which allows for lazy evaluation
-        return postService.getOptionalPostMonoById(postId) // Fetch Post by ID
-                .flatMap(postOptional -> Mono.justOrEmpty(postOptional) // Convert Optional to Mono
-                        .switchIfEmpty(Mono.error(new RuntimeException("Post not found " + postId))));  // Throw error if Post not found
-    }
-
-    private Mono<Comment> findCommentById(Long commentId) {
-        // Create a Mono that asynchronously emits the result of calling commentRepository.findById(commentId)
-        // The result is obtained by calling the method in a Callable, which allows for lazy evaluation
-        return commentService.getOptionalCommentMonoById(commentId) // Fetch Comment by ID
-                .flatMap(commentOptional -> Mono.justOrEmpty(commentOptional) // Convert Optional to Mono
-                        .switchIfEmpty(Mono.error(new RuntimeException("Comment not found " + commentId))));  // Throw error if Comment not found
-    }
-
-    private Mono<User> findUserById(Long userId) {
-        // Create a Mono that asynchronously emits the result of calling userRepository.findById(userId)
-        // The result is obtained by calling the method in a Callable, which allows for lazy evaluation
-        return userService.getOptionalUserMonoById(userId) // Fetch User by ID
-                .flatMap(userOptional -> Mono.justOrEmpty(userOptional) // Convert Optional to Mono
-                        // Throw error if User not found
-                        .switchIfEmpty(Mono.error(new RuntimeException("User not found " + userId))));
     }
 
     public Flux<Like> getUserPostLikes(Long userId) {
